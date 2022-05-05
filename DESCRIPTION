@@ -1,0 +1,11 @@
+Package: HGMM
+Type: Package
+Title: Visualize potentially relevant shape changes within a sample of shapes
+Version: 1.0
+Date: 2022-04-13
+Author: Andrea Cardini, Stefan Schlager
+Maintainer: Stefan Schlager <zarquon42@gmail.com>
+Description: Visualize potentially relevant shape changes within a sample of shapes associated with relevant factors. This is done by comparing the effect of individual interlandmark distances
+License: GPL >=2
+Imports: Morpho
+RoxygenNote: 7.1.2
