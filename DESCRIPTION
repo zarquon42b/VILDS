@@ -8,4 +8,5 @@ Maintainer: Stefan Schlager <zarquon42@gmail.com>
 Description: Visualize potentially relevant shape changes within a sample of shapes associated with relevant factors. This is done by comparing the effect of individual interlandmark distances
 License: GPL >=2
 Imports: Morpho
+Encoding: UTF-8
 RoxygenNote: 7.1.2

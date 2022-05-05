@@ -4,7 +4,7 @@
 \alias{slidR2}
 \title{Compute R2 for Interlandmark Distances}
 \usage{
-slidR2(x, groups, startref, target, R2tol = 0.95, plot = TRUE)
+slidR2(x, groups, startref, target, R2tol = 0.95, plot = FALSE)
 }
 \arguments{
 \item{x}{array containing landmarks}
@@ -16,6 +16,8 @@ slidR2(x, groups, startref, target, R2tol = 0.95, plot = TRUE)
 \item{target}{matrix containing target config landmarks}
 
 \item{R2tol}{numeric: upper percentile for SILD R2 in relation to factor}
+
+\item{plot}{logical: if TRUE show graphical output of steps involved}
 }
 \value{
 matrix containing landmark information with the highest R2 (Andrea please specify here)

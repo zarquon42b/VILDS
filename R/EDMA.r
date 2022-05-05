@@ -29,7 +29,7 @@ EDMA <- function(A) {
 #' @param startref matrix containing start config landmarks
 #' @param target matrix containing target config landmarks
 #' @param R2tol numeric: upper percentile for SILD R2 in relation to factor 
-#' 
+#' @param plot logical: if TRUE show graphical output of steps involved
 #' @importFrom Morpho vecx bindArr
 #' @return
 #' matrix containing landmark information with the highest R2 (Andrea please specify here)
@@ -43,7 +43,7 @@ EDMA <- function(A) {
 #' target <- arrMean3(proc$rotated[,,groups=="eu"])
 #' ildR2 <- slidR2(proc$rotated,groups,startref,target,plot=TRUE)
 #' @export 
-slidR2 <- function(x,groups,startref,target,R2tol=.95,plot=TRUE) {
+slidR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
     D <- dim(x)[2] ## get LM dimensionality
     ## convert to matrix in x1,y1,z1,... format
     
@@ -59,15 +59,17 @@ slidR2 <- function(x,groups,startref,target,R2tol=.95,plot=TRUE) {
     colnames(twosh.SILD)=c("start","target")
 
     av.twosh.SILD <- apply(twosh.SILD,1,mean);
-    ## if (plot) {
-    ##     par(mfrow=c(1,3))
-    ##     plot(twosh.SILD, asp=1)
-    ##     plot(twosh.SILD[,1], av.twosh.SILD, asp=1, main="averaged SILDs ~ obs. SILDs?", xlab="start", ylab="averaged start-target")
-    ##     plot(twosh.SILD[,2], av.twosh.SILD, asp=1, xlab="target", ylab="averaged start-target")
-    ##     par(mfrow=c(1,1))
-    ## }
-    
-
+   if (plot) {
+        par(mfrow=c(1,3))
+        plot(twosh.SILD, asp=1)
+        plot(twosh.SILD[,1], av.twosh.SILD, asp=1, main="averaged SILDs ~ obs. SILDs?", xlab="start", ylab="averaged start-target")
+        plot(twosh.SILD[,2], av.twosh.SILD, asp=1, xlab="target", ylab="averaged start-target")
+        par(mfrow=c(1,1))
+    }
+    if (plot) {
+    if(interactive())
+        readline("proceed? (press any key to proceed)\n")
+    }
     ratios.twosh.SILD=twosh.SILD$target/twosh.SILD$start
     names(ratios.twosh.SILD) <- rownames(twosh.SILD)
     ratios.twosh.SILD.sorted <- sort(ratios.twosh.SILD)
