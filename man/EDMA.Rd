@@ -15,3 +15,10 @@ returns a matrix with each row containing the pairwise distances between landmar
 \description{
 Compute pairwise landmark distances from landmark array
 }
+\examples{
+require(Morpho)
+data(boneData)
+proc <- procSym(boneLM)
+### compute EDMA from Procrustes aligned landmarks.
+edma <- EDMA(proc$rotated)
+}

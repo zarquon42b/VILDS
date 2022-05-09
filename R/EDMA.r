@@ -4,6 +4,12 @@
 #' @param A k x m x n array of landmarks
 #' @return
 #' returns a matrix with each row containing the pairwise distances between landmarks
+#' @examples
+#' require(Morpho)
+#' data(boneData)
+#' proc <- procSym(boneLM)
+#' ### compute EDMA from Procrustes aligned landmarks.
+#' edma <- EDMA(proc$rotated)
 #' @export
 EDMA <- function(A) {
     
@@ -100,7 +106,7 @@ slidR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
     o2=round(o1, digits=2)
 
     return(o2)
-
-
-    
+   
 }
+
+
