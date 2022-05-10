@@ -47,9 +47,9 @@ EDMA <- function(A) {
 #' groups <- name2factor(boneLM,which=3)
 #' startref <- arrMean3(proc$rotated[,,groups=="ch"])
 #' target <- arrMean3(proc$rotated[,,groups=="eu"])
-#' ildR2 <- slidR2(proc$rotated,groups,startref,target,plot=TRUE)
+#' ildR2 <- sildR2(proc$rotated,groups,startref,target,plot=TRUE)
 #' @export 
-slidR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
+sildR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
     D <- dim(x)[2] ## get LM dimensionality
     ## convert to matrix in x1,y1,z1,... format
     
