@@ -115,3 +115,25 @@ ILDSR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
 }
 
 
+
+tar2refPlot <- function(reference,reftarILDS,highlight=NULL) {
+    rn <- rownames(reftarILDS)
+    pairing <- (matrix(as.integer(unlist(strsplit(rn,split = "-"))),length(rn),2,byrow=T))
+    ref0 <- reference[pairing[,1],]
+    ref1 <- reference[pairing[,2],]
+    
+    if (ncol(reference)==3) {
+        mydeform <- deformGrid3d
+    } else
+        mydeform <- deformGrid2d
+    
+    if (!is.null(highlight)) {
+        hm <- match(highlight,rn)
+        mydeform(ref0,ref0,lines=F,lwd=0,show=1)
+        mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=3,show=1)
+        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "green",lwd=1)
+    } else {
+        mydeform(ref0,ref1)
+    }
+} 
+
