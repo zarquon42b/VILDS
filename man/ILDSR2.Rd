@@ -20,7 +20,12 @@ ILDSR2(x, groups, startref, target, R2tol = 0.95, plot = FALSE)
 \item{plot}{logical: if TRUE show graphical output of steps involved}
 }
 \value{
-matrix containing landmark information with the highest R2 (Andrea please specify here)
+A list containing:
+\item{largeR2}{containing landmark information with the highest R2 (Andrea please specify here)}
+\item{allR2}{vector with ILD specific R2-values, sorted decreasingly}
+\item{reftarILDS}{matrix with columns containing ILDs for reference and target shapes}
+\item{sampleILD}{matrix containing ILDs of entire sample}
+\item{R2tol}{R2-threshold used}
 }
 \description{
 Compute R2 for Interlandmark Distances explaining between group differences
