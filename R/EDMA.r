@@ -85,18 +85,17 @@ ILDSR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
     ratios.twosh.SILD.sorted <- sort(ratios.twosh.SILD)
     av.twosh.SILDsortedasratios <- av.twosh.SILD[names(ratios.twosh.SILD.sorted)]
 
-    if (plot) {
-        par(mfrow=c(2,2))
-        cor(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted)
-        plot(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted, main="are SILD ratios varying more in smaller SILDs?", xlab="average of start & target SILD", ylab="target/start SILD ratio")
-        abline(a=1, b=0, col="grey", lwd=3, lty=1) 
-    }
+   
     all.R2 <- as.vector(cor(allSILD, as.numeric(groups))^2)
     names(all.R2) <- colnames(allSILD)
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
     av.twosh.SILDsorted <- av.twosh.SILD[names(all.R2sorted)]
     # cor(all.R2sorted, av.twosh.SILDsorted)
     if (plot) {
+        par(mfrow=c(2,2))
+        cor(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted)
+        plot(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted, main="are SILD ratios varying more in smaller SILDs?", xlab="average of start & target SILD", ylab="target/start SILD ratio")
+         abline(a=1, b=0, col="grey", lwd=3, lty=1) 
         plot(av.twosh.SILDsorted,all.R2sorted, main="have R2s a relation to length of SILDs?", xlab="average of start & target SILD", ylab="R2 for sample SILDs vs factor"); abline(a=quantile(all.R2sorted, probs=R2tol), b=0, col="grey", lwd=3, lty=1)
         hist(ratios.twosh.SILD.sorted, breaks=sqrt(length(ratios.twosh.SILD.sorted)), prob=TRUE, main="hist. of target to start SILD ratios"); lines(density(ratios.twosh.SILD.sorted), col="red")
         hist(all.R2sorted, breaks=sqrt(length(all.R2sorted)), prob=TRUE, main="hist. of target to start SILD R2s"); lines(density(all.R2sorted), col="red"); par(mfrow=c(1,1))
