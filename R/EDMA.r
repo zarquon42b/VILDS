@@ -8,10 +8,10 @@
 #' require(Morpho)
 #' data(boneData)
 #' proc <- procSym(boneLM)
-#' ### compute EDMA from Procrustes aligned landmarks.
-#' edma <- EDMA(proc$rotated)
+#' ### compute ILDS from Procrustes aligned landmarks.
+#' edma <- ILDS(proc$rotated)
 #' @export
-EDMA <- function(A) {
+ILDS <- function(A) {
     
     n=dim(A)[3]; p=dim(A)[1]; k=dim(A)[2] # n; p; k
     Name=NA
@@ -47,20 +47,20 @@ EDMA <- function(A) {
 #' groups <- name2factor(boneLM,which=3)
 #' startref <- arrMean3(proc$rotated[,,groups=="ch"])
 #' target <- arrMean3(proc$rotated[,,groups=="eu"])
-#' ildR2 <- sildR2(proc$rotated,groups,startref,target,plot=TRUE)
+#' ilds <- ILDSR2(proc$rotated,groups,startref,target,plot=TRUE)
 #' @export 
-sildR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
+ILDSR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
     D <- dim(x)[2] ## get LM dimensionality
     ## convert to matrix in x1,y1,z1,... format
     
 
-    ild <- EDMA(x)
+    ild <- ILDS(x)
     allSILD <- round(ild, digits=6)
     if (length(dim(x)) == 3)
         x <- vecx(x,byrow = T)
     
     twosh <- bindArr(startref,target,along=3)
-    E <- EDMA(twosh)
+    E <- ILDS(twosh)
     twosh.SILD <- round(as.data.frame(t(E)), digits=6)
     colnames(twosh.SILD)=c("start","target")
 
@@ -94,7 +94,7 @@ sildR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
     if (plot) {
         plot(av.twosh.SILDsorted,all.R2sorted, main="have R2s a relation to length of SILDs?", xlab="average of start & target SILD", ylab="R2 for sample SILDs vs factor"); abline(a=quantile(all.R2sorted, probs=R2tol), b=0, col="grey", lwd=3, lty=1)
         hist(ratios.twosh.SILD.sorted, breaks=sqrt(length(ratios.twosh.SILD.sorted)), prob=TRUE, main="hist. of target to start SILD ratios"); lines(density(ratios.twosh.SILD.sorted), col="red")
-        hist(all.R2sorted, breaks=sqrt(length(all.R2sorted)), prob=TRUE, main="hist. of target to start SILD ratios"); lines(density(all.R2sorted), col="red"); par(mfrow=c(1,1))
+        hist(all.R2sorted, breaks=sqrt(length(all.R2sorted)), prob=TRUE, main="hist. of target to start SILD R2s"); lines(density(all.R2sorted), col="red"); par(mfrow=c(1,1))
     }
 
     largerR2=round(subset(all.R2sorted, all.R2sorted>stats::quantile(all.R2sorted, probs=R2tol)), digits=7)

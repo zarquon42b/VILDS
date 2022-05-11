@@ -1,4 +1,4 @@
-Package: HGMM
+Package: VILDS
 Type: Package
 Title: Visualize potentially relevant shape changes within a sample of shapes
 Version: 1.0
