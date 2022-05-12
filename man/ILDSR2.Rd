@@ -4,14 +4,14 @@
 \alias{ILDSR2}
 \title{Compute R2 for Interlandmark Distances}
 \usage{
-ILDSR2(x, groups, startref, target, R2tol = 0.95, plot = FALSE)
+ILDSR2(x, groups, reference, target, R2tol = 0.95, plot = FALSE)
 }
 \arguments{
 \item{x}{array containing landmarks}
 
 \item{groups}{vector containing group assignments}
 
-\item{startref}{matrix containing start config landmarks}
+\item{reference}{matrix containing start config landmarks}
 
 \item{target}{matrix containing target config landmarks}
 
@@ -35,7 +35,7 @@ require(Morpho)
 data(boneData)
 proc <- procSym(boneLM)
 groups <- name2factor(boneLM,which=3)
-startref <- arrMean3(proc$rotated[,,groups=="ch"])
+reference <- arrMean3(proc$rotated[,,groups=="ch"])
 target <- arrMean3(proc$rotated[,,groups=="eu"])
-ilds <- ILDSR2(proc$rotated,groups,startref,target,plot=TRUE)
+ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
 }

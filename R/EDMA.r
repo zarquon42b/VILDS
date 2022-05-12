@@ -32,7 +32,7 @@ ILDS <- function(A) {
 #' Compute R2 for Interlandmark Distances explaining between group differences
 #' @param x array containing landmarks
 #' @param groups vector containing group assignments
-#' @param startref matrix containing start config landmarks
+#' @param reference matrix containing start config landmarks
 #' @param target matrix containing target config landmarks
 #' @param R2tol numeric: upper percentile for SILD R2 in relation to factor 
 #' @param plot logical: if TRUE show graphical output of steps involved
@@ -51,18 +51,18 @@ ILDS <- function(A) {
 #' data(boneData)
 #' proc <- procSym(boneLM)
 #' groups <- name2factor(boneLM,which=3)
-#' startref <- arrMean3(proc$rotated[,,groups=="ch"])
+#' reference <- arrMean3(proc$rotated[,,groups=="ch"])
 #' target <- arrMean3(proc$rotated[,,groups=="eu"])
-#' ilds <- ILDSR2(proc$rotated,groups,startref,target,plot=TRUE)
+#' ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
 #' @export 
-ILDSR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
+ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
     D <- dim(x)[2] ## get LM dimensionality
     ild <- ILDS(x)
     allSILD <- round(ild, digits=6)
     if (length(dim(x)) == 3)
         x <- vecx(x,byrow = T)
     
-    twosh <- bindArr(startref,target,along=3)
+    twosh <- bindArr(reference,target,along=3)
     E <- ILDS(twosh)
     twosh.SILD <- round(as.data.frame(t(E)), digits=6)
     colnames(twosh.SILD)=c("start","target")
@@ -109,16 +109,39 @@ ILDSR2 <- function(x,groups,startref,target,R2tol=.95,plot=FALSE) {
 
     o1 <- rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios)
     o2 <- round(o1, digits=2)
-    
-    return(list(largeR2=o2,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol))
+    out <- list(largeR2=o2,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target)
+    class(out) <- "ILDSR2"
+    return(out)
    
 }
 
 
-
-tar2refPlot <- function(reference,reftarILDS,highlight=NULL) {
+#' Plot the ILDS with the relevant ILDS ighlighted
+#'
+#' Plot the ILDS with the relevant ILDS ighlighted
+#' @param x output of function \code{\link{ILDSR2}}
+#' @param ref logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used.
+#' @param ... additional parametr - currently not used.
+#' @examples
+#' require(Morpho)
+#' data(boneData)
+#' proc <- procSym(boneLM)
+#' groups <- name2factor(boneLM,which=3)
+#' reference <- arrMean3(proc$rotated[,,groups=="ch"])
+#' target <- arrMean3(proc$rotated[,,groups=="eu"])
+#' ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
+#' plot(ilds)
+#' @export
+plot.ILDSR2 <- function(x,ref=TRUE,...) {
+     if (!inherits(x, "ILDSR2")) 
+        stop("please provide object of class 'ILDSR2'")
+    reftarILDS <- x$reftarILDS
     rn <- rownames(reftarILDS)
     pairing <- (matrix(as.integer(unlist(strsplit(rn,split = "-"))),length(rn),2,byrow=T))
+    if (ref)
+        reference <- x$reference
+    else
+        reference <- x$target
     ref0 <- reference[pairing[,1],]
     ref1 <- reference[pairing[,2],]
     
@@ -126,12 +149,12 @@ tar2refPlot <- function(reference,reftarILDS,highlight=NULL) {
         mydeform <- deformGrid3d
     } else
         mydeform <- deformGrid2d
-    
-    if (!is.null(highlight)) {
+     highlight <- colnames(x$largeR2)
+     if (!is.null(highlight)) {
         hm <- match(highlight,rn)
-        mydeform(ref0,ref0,lines=F,lwd=0,show=1)
+        mydeform(reference,reference,lines=F,lwd=0,show=1)
         mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=3,show=1)
-        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "green",lwd=1)
+        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "black",lwd=1,show=1)
     } else {
         mydeform(ref0,ref1)
     }
