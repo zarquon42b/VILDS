@@ -17,6 +17,7 @@
 Plot the ILDS with the relevant ILDS ighlighted
 }
 \examples{
+## 3D Example
 require(Morpho)
 data(boneData)
 proc <- procSym(boneLM)
@@ -25,4 +26,14 @@ reference <- arrMean3(proc$rotated[,,groups=="ch"])
 target <- arrMean3(proc$rotated[,,groups=="eu"])
 ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
 plot(ilds)
+
+## 2D Example
+require(shapes)
+gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
+sex <- factor(c(rep("f",30),rep("m",29)))
+procg <- procSym(gor.dat)
+refg <- arrMean3(procg$rotated[,,sex=="f"])
+targ <- arrMean3(procg$rotated[,,sex=="m"])
+ildsg <- ILDSR2(procg$rotated,sex,refg,targ,plot=FALSE)
+plot(ildsg)
 }

@@ -54,6 +54,7 @@ ILDS <- function(A) {
 #' reference <- arrMean3(proc$rotated[,,groups=="ch"])
 #' target <- arrMean3(proc$rotated[,,groups=="eu"])
 #' ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
+#' @import graphics stats
 #' @export 
 ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
     D <- dim(x)[2] ## get LM dimensionality
@@ -123,6 +124,7 @@ ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
 #' @param ref logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used.
 #' @param ... additional parametr - currently not used.
 #' @examples
+#' ## 3D Example
 #' require(Morpho)
 #' data(boneData)
 #' proc <- procSym(boneLM)
@@ -131,6 +133,17 @@ ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
 #' target <- arrMean3(proc$rotated[,,groups=="eu"])
 #' ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
 #' plot(ilds)
+#'
+#' ## 2D Example
+#' require(shapes)
+#' gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
+#' sex <- factor(c(rep("f",30),rep("m",29)))
+#' procg <- procSym(gor.dat)
+#' refg <- arrMean3(procg$rotated[,,sex=="f"])
+#' targ <- arrMean3(procg$rotated[,,sex=="m"])
+#' ildsg <- ILDSR2(procg$rotated,sex,refg,targ,plot=FALSE)
+#' plot(ildsg)
+#' @importFrom Morpho deformGrid2d deformGrid3d
 #' @export
 plot.ILDSR2 <- function(x,ref=TRUE,...) {
      if (!inherits(x, "ILDSR2")) 
@@ -152,9 +165,9 @@ plot.ILDSR2 <- function(x,ref=TRUE,...) {
      highlight <- colnames(x$largeR2)
      if (!is.null(highlight)) {
         hm <- match(highlight,rn)
-        mydeform(reference,reference,lines=F,lwd=0,show=1)
-        mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=3,show=1)
-        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "black",lwd=1,show=1)
+        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,...)
+        mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=3,show=1,cex2=0,...)
+        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "black",lwd=1,show=1,cex2=0,...)
     } else {
         mydeform(ref0,ref1)
     }
