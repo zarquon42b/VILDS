@@ -139,7 +139,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
 
     o1 <- rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios)
     o2 <- round(o1, digits=2)
-    out <- list(largeR2=o2,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target)
+    out <- list(largeR2=o2,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds)
     
     R2names <- colnames(o2)
 
@@ -148,7 +148,11 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     if (bg.rounds > 0) {
         bg.test <- permudist(x,groups,rounds=bg.rounds)
         if (!silent) {
-            message(paste0("P-value between groups: ",bg.test$p.value,"\n"))
+            if (bg.test$p.value < 0.05)
+                pvalcol <- crayon::green
+            else
+                pvalcol <- crayon::red
+            message(crayon::bold(paste0("P-value between groups: ",pvalcol(bg.test$p.value),"\n")))
         }
         out$bg.test <- bg.test
     }
@@ -163,7 +167,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
         names(confR2) <- R2names
         ## out$wg.boot=wg.boot
         if (!silent) {
-            colorILDS(confR2)
+            colorILDS(confR2,wg.rounds)
             
             }
         out$confR2 <- confR2
@@ -175,6 +179,22 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     class(out) <- "ILDSR2"
     return(out)
    
+}
+
+#' @export
+print.ILDSR2 <- function(x,...) {
+    print(x$largeR2)
+    cat("\n")
+    if (x$bg.rounds > 0) {
+        if (x$bg.test$p.value < 0.05)
+                pvalcol <- crayon::green
+            else
+                pvalcol <- crayon::red
+        message(crayon::bold(paste0("P-value between groups (",x$bg.rounds," rounds): ",pvalcol(x$bg.test$p.value),"\n")))
+    } 
+
+    if (x$wg.rounds > 0)
+        colorILDS(x$confR2,x$wg.rounds)
 }
 
 
@@ -189,9 +209,9 @@ bootstrapILDSR2 <- function(x,groups,rounds,R2tol) {
     
 }
 
-colorILDS <- function(x) {
-    cat(paste0("Bootstrapped confidence of relevant ILDS\n"))
-            
+colorILDS <- function(x,rounds=NULL) {
+    cat(crayon::bold(paste0("Bootstrapped (",rounds," rounds) confidence of relevant ILDS\n")))
+                
             for (i in 1:length(x)) {
                 cat(" ")
                 itmp <- x[i]
