@@ -31,7 +31,7 @@ ILDS <- function(A) {
 #'
 #' Compute R2 for Interlandmark Distances explaining between group differences
 #' @param x array containing landmarks
-#' @param groups vector containing group assignments. If more than two levels, a pair of needs to be specified.
+#' @param groups vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}
 #' @param R2tol numeric: upper percentile for SILD R2 in relation to factor
 #' @param bg.rounds numeric: number of permutation rounds to assess between group differences
 #' @param wg.rounds numeric: number of rounds to assess noise within groups by bootstrapping.
@@ -41,6 +41,7 @@ ILDS <- function(A) {
 #' @param mc.cores integer: number of cores to use for permutation tests.
 #' @param plot logical: if TRUE show graphical output of steps involved
 #' @param silent logical: suppress console output
+#' @param ... additional parameters for internal use only.
 
 #' @importFrom Morpho vecx bindArr
 #' @return
@@ -60,51 +61,82 @@ ILDS <- function(A) {
 #' data(boneData)
 #' proc <- procSym(boneLM)
 #' groups <- name2factor(boneLM,which=3)
-#' ilds <- ILDSR2(proc$rotated,groups,plot=TRUE,wg.rounds=999,mc.cores=2)
+#' ilds <- ILDSR2(proc$rotated,groups,plot=TRUE,wg.rounds=99,mc.cores=2)
+#' if (interactive())
+#' plot(ilds)
+#' ## use covariate
+#' \dontrun{
+#' ildsLM <- ILDSR2(proc$rotated,groups=proc$size,plot=TRUE,wg.rounds=99,mc.cores=2)
+#' if (interactive())
+#' plot(ildsLM)
+#' }
 #' @importFrom Morpho permudist arrMean3
 #' @import graphics stats 
 #' @export 
-ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE) {
+ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE,...) {
     D <- dim(x)[2] ## get LM dimensionality
     ild <- ILDS(x)
     xorig <- x
     allSILD <- round(ild, digits=6)
+    mindim <- ncol(allSILD)
     if (length(dim(x)) == 3)
         x <- vecx(x,byrow = T)
-
+    bootstrap <- FALSE
+    args <- list(...)
+    if ("bootstrap" %in% names(args)) {
+        bootstrap <- args$bootstrap
+    }
+    
+       
     ## set up grouping variable
-    if (!is.factor(groups))
-        groups <- factor(groups)
+    regression <- FALSE
+    if (!is.factor(groups) && is.numeric(groups)) {
+        regression <- TRUE
+        if (!silent)
+            message("groups is interpreted as covariate. Using regression scheme.")
+    }
     
     if (is.factor(groups)) {
         groups <- factor(groups)
         lev <- levels(groups)
 
     }
+    ## factor case
+    if (!regression) {
+        old_groups <- groups
+        if (!is.null(which)) {
+            groups <- factor(groups[groups %in% lev[which]])
+            lev <- levels(groups)
+            x <- x[which(old_groups %in% lev),]
+        }
+        ng <- length(lev)
 
-    old_groups <- groups
-    if (!is.null(which)) {
-        groups <- factor(groups[groups %in% lev[which]])
-        lev <- levels(groups)
-        x <- x[which(old_groups %in% lev),]
+        if (ng < 2)
+            stop("provide at least two groups")
+        if (length(groups) != nrow(x))
+            warning("group affinity and sample size not corresponding!")
+
+        
+        
+        ## create reference and target
+        if (is.null(reference))
+            reference <- arrMean3(xorig[,,groups==lev[1]])
+        
+        if (is.null(target))
+            target <- arrMean3(xorig[,,groups==lev[2]])
+
+        twosh <- bindArr(reference,target,along=3)
+        
+    } else { ## regression case
+        lmod <- lm(x~groups)
+        estquant <- quantile(groups,probs=c(.1,.9))
+        tarref <- predict(lmod,newdata=list(groups=estquant))
+        twosh <- vecx(tarref,revert = T,lmdim = D,byrow = T)
+        reference <- twosh[,,1]
+        target <- twosh[,,2]
     }
-    ng <- length(lev)
-
-    if (ng < 2)
-        stop("provide at least two groups")
-    if (length(groups) != nrow(x))
-        warning("group affinity and sample size not corresponding!")
 
     
-    
-    ## create reference and target
-    if (is.null(reference))
-        reference <- arrMean3(xorig[,,groups==lev[1]])
-    
-    if (is.null(target))
-        target <- arrMean3(xorig[,,groups==lev[2]])
-    
-    twosh <- bindArr(reference,target,along=3)
     E <- ILDS(twosh)
     twosh.SILD <- round(as.data.frame(t(E)), digits=6)
     colnames(twosh.SILD)=c("start","target")
@@ -117,7 +149,14 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     av.twosh.SILDsortedasratios <- av.twosh.SILD[names(ratios.twosh.SILD.sorted)]
 
     ## compute R2
-    all.R2 <- as.vector(cor(allSILD, as.numeric(groups))^2)
+    if (!regression)
+        all.R2 <- as.vector(cor(allSILD, as.numeric(groups))^2)
+    else {
+        R2lm <- (lm(allSILD~groups))
+        tmplm <- summary(R2lm)
+        all.R2 <- sapply(tmplm,function(x) x <- x$r.squared)
+        
+    }
     names(all.R2) <- colnames(allSILD)
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
     av.twosh.SILDsorted <- av.twosh.SILD[names(all.R2sorted)]
@@ -144,17 +183,23 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     R2names <- colnames(o1)
 
     ## compute between group permutation testing
-    if (bg.rounds > 0) {
+    if (bg.rounds > 0 && !regression) {
         bg.test <- permudist(x,groups,rounds=bg.rounds)
         if (!silent)
             colorPVal(bg.test$p.value,rounds=bg.rounds)
-       
+        
         out$bg.test <- bg.test
+    }
+    if (regression && !bootstrap) {
+        pval <- anova(R2lm)$"Pr(>F)"[2]
+        if (!silent)
+            colorPVal(pval,permu=FALSE)
+        out$bg.test <- pval
     }
 
     ## bootstrapping
     if (wg.rounds > 0) {
-        wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,rounds=wg.rounds,R2tol=R2tol),mc.cores = mc.cores)
+        wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,rounds=wg.rounds,R2tol=R2tol,regression=regression,mindim=mindim),mc.cores = mc.cores)
 
         freqsR2 <- unlist(lapply(wg.boot,match,R2names))
         confR2 <- sapply(1:length(R2names),function(x) x <- length(which(freqsR2==x)))
@@ -183,22 +228,38 @@ print.ILDSR2 <- function(x,...) {
 }
 
 
-bootstrapILDSR2 <- function(x,groups,rounds,R2tol) {
-    lev <- levels(groups)
-    for (i in lev) {
-        tmpgroup <- which(groups==i)
-        x[,,groups==i] <- x[,,sample(tmpgroup,size=length(tmpgroup),replace = TRUE)]
+bootstrapILDSR2 <- function(x,groups,rounds,R2tol,regression=FALSE,mindim) {
+    if (!regression) {
+        lev <- levels(groups)
+        for (i in lev) {
+            tmpgroup <- which(groups==i)
+            x[,,groups==i] <- x[,,sample(tmpgroup,size=length(tmpgroup),replace = TRUE)]
+        }
+    } else {
+        error <- TRUE
+        while(error) {
+            mysample <- sample(length(groups),replace=T,size=dim(x)[3]*2)
+            if (length(unique(mysample)) >= mindim)
+                error <- FALSE
+            
+        }
+        x <- x[,,mysample]
+        groups <- groups[mysample]
+        
     }
-    out <- colnames(ILDSR2(x,groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol,silent=TRUE)$largeR2)
+    out <- colnames(ILDSR2(x,groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol,silent=TRUE,bootstrap=TRUE)$largeR2)
     
     
 }
-colorPVal <- function(x,rounds=NULL) {
+colorPVal <- function(x,rounds=NULL,permu=TRUE) {
     if (x < 0.05)
-                pvalcol <- crayon::green
-            else
-                pvalcol <- crayon::red
-    message(crayon::bold(paste0("P-value between groups (",rounds," rounds): ",pvalcol(x),"\n")))
+        pvalcol <- crayon::green
+    else
+        pvalcol <- crayon::red
+    if (permu)
+        message(crayon::bold(paste0("P-value between groups (",rounds," rounds): ",pvalcol(x),"\n")))
+    else
+        message(crayon::bold(paste0("P-value of linear model shape ~ predictor: ",pvalcol(x),"\n")))
 
     
 }
@@ -227,7 +288,9 @@ colorILDS <- function(x,rounds=NULL) {
 #' Plot the ILDS with the relevant ILDS ighlighted
 #' @param x output of function \code{\link{ILDSR2}}
 #' @param ref logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used.
-#' @param ... additional parametr - currently not used.
+#' @param relcol color of relevant ILDs
+#' @param rescol color of "irrelevant" ILDs
+#' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
 #' require(Morpho)
@@ -247,7 +310,7 @@ colorILDS <- function(x,rounds=NULL) {
 #' @importFrom Morpho deformGrid2d deformGrid3d
 #' @importFrom rgl text3d
 #' @export
-plot.ILDSR2 <- function(x,ref=TRUE,...) {
+plot.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",...) {
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS

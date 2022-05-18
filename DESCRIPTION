@@ -11,7 +11,8 @@ Imports: Morpho,
     graphics,
     crayon,
     parallel,
-    stats
+    stats,
+    rgl
 Suggests:
     shapes
 Encoding: UTF-8

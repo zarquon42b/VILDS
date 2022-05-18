@@ -10,18 +10,19 @@ ILDSR2(
   R2tol = 0.95,
   bg.rounds = 999,
   wg.rounds = 999,
-  which = NULL,
+  which = 1:2,
   reference = NULL,
   target = NULL,
   mc.cores = 1,
   plot = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  ...
 )
 }
 \arguments{
 \item{x}{array containing landmarks}
 
-\item{groups}{vector containing group assignments. If more than two levels, a pair of needs to be specified.}
+\item{groups}{vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}}
 
 \item{R2tol}{numeric: upper percentile for SILD R2 in relation to factor}
 
@@ -40,6 +41,8 @@ ILDSR2(
 \item{plot}{logical: if TRUE show graphical output of steps involved}
 
 \item{silent}{logical: suppress console output}
+
+\item{...}{additional parameters for internal use only.}
 }
 \value{
 A list containing:
@@ -61,5 +64,13 @@ require(Morpho)
 data(boneData)
 proc <- procSym(boneLM)
 groups <- name2factor(boneLM,which=3)
-ilds <- ILDSR2(proc$rotated,groups,plot=TRUE,wg.rounds=999,mc.cores=2)
+ilds <- ILDSR2(proc$rotated,groups,plot=TRUE,wg.rounds=99,mc.cores=2)
+if (interactive())
+plot(ilds)
+## use covariate
+\dontrun{
+ildsLM <- ILDSR2(proc$rotated,groups=proc$size,plot=TRUE,wg.rounds=99,mc.cores=2)
+if (interactive())
+plot(ildsLM)
+}
 }

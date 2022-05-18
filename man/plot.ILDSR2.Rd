@@ -4,14 +4,18 @@
 \alias{plot.ILDSR2}
 \title{Plot the ILDS with the relevant ILDS ighlighted}
 \usage{
-\method{plot}{ILDSR2}(x, ref = TRUE, ...)
+\method{plot}{ILDSR2}(x, ref = TRUE, relcol = "red", rescol = "black", ...)
 }
 \arguments{
 \item{x}{output of function \code{\link{ILDSR2}}}
 
 \item{ref}{logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used.}
 
-\item{...}{additional parametr - currently not used.}
+\item{relcol}{color of relevant ILDs}
+
+\item{rescol}{color of "irrelevant" ILDs}
+
+\item{...}{additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.}
 }
 \description{
 Plot the ILDS with the relevant ILDS ighlighted
