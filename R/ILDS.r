@@ -163,26 +163,13 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
         names(confR2) <- R2names
         out$wg.boot=wg.boot
         if (!silent) {
-            cat(paste0("Bootstrapped confidence of relevant ILDS\n"))
-            
-            for (i in 1:length(confR2)) {
-                cat(" ")
-                itmp <- confR2[i]
-                if (itmp > 75)
-                    colfun <- crayon::green
-                   
-                else if (itmp > 50)
-                    colfun <-  crayon::yellow
-                else
-                    colfun <-  crayon::red
-                cat(colfun(paste0(crayon::bold("ILDS",names(itmp)),": ",itmp,"% ")))
-                cat("\n")
+            colorILDS(confR2)
             
             }
         out$confR2 <- confR2
         
-        }
     }
+    
 
      
     class(out) <- "ILDSR2"
@@ -202,6 +189,22 @@ bootstrapILDSR2 <- function(x,groups,rounds,R2tol) {
     
 }
 
+colorILDS <- function(x) {
+    cat(paste0("Bootstrapped confidence of relevant ILDS\n"))
+            
+            for (i in 1:length(x)) {
+                cat(" ")
+                itmp <- x[i]
+                if (itmp > 75)
+                    colfun <- crayon::green
+                else if (itmp > 50)
+                    colfun <-  crayon::yellow
+                else
+                    colfun <-  crayon::red
+                cat(colfun(paste0(crayon::bold("ILDS",names(itmp)),": ",itmp,"% ")))
+                cat("\n")
+            }
+}
 
 
 
