@@ -73,7 +73,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
         x <- vecx(x,byrow = T)
 
     ## set up grouping variable
-     if (!is.factor(groups))
+    if (!is.factor(groups))
         groups <- factor(groups)
     
     if (is.factor(groups)) {
@@ -95,8 +95,8 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     if (length(groups) != nrow(x))
         warning("group affinity and sample size not corresponding!")
 
-   
-        
+    
+    
     ## create reference and target
     if (is.null(reference))
         reference <- arrMean3(xorig[,,groups==lev[1]])
@@ -110,7 +110,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     colnames(twosh.SILD)=c("start","target")
 
     av.twosh.SILD <- apply(twosh.SILD,1,mean);
-   
+    
     ratios.twosh.SILD <- twosh.SILD$target/twosh.SILD$start
     names(ratios.twosh.SILD) <- rownames(twosh.SILD)
     ratios.twosh.SILD.sorted <- sort(ratios.twosh.SILD)
@@ -121,12 +121,12 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     names(all.R2) <- colnames(allSILD)
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
     av.twosh.SILDsorted <- av.twosh.SILD[names(all.R2sorted)]
-    # cor(all.R2sorted, av.twosh.SILDsorted)
+                                        # cor(all.R2sorted, av.twosh.SILDsorted)
     if (plot) {
         par(mfrow=c(2,2))
         cor(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted)
         plot(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted, main="are SILD ratios varying more in smaller SILDs?", xlab="average of start & target SILD", ylab="target/start SILD ratio")
-         abline(a=1, b=0, col="grey", lwd=3, lty=1) 
+        abline(a=1, b=0, col="grey", lwd=3, lty=1) 
         plot(av.twosh.SILDsorted,all.R2sorted, main="have R2s a relation to length of SILDs?", xlab="average of start & target SILD", ylab="R2 for sample SILDs vs factor"); abline(a=quantile(all.R2sorted, probs=R2tol), b=0, col="grey", lwd=3, lty=1)
         hist(ratios.twosh.SILD.sorted, breaks=sqrt(length(ratios.twosh.SILD.sorted)), prob=TRUE, main="hist. of target to start SILD ratios"); lines(density(ratios.twosh.SILD.sorted), col="red")
         hist(all.R2sorted, breaks=sqrt(length(all.R2sorted)), prob=TRUE, main="hist. of target to start SILD R2s"); lines(density(all.R2sorted), col="red"); par(mfrow=c(1,1))
@@ -137,23 +137,18 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     largerR2.rankedByRatios <- 1+length(ratios.twosh.SILD.sorted)-rank(sort(round(abs(1-ratios.twosh.SILD.sorted), digits=7)), ties.method="random")[names(largerR2)]
     outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allSILD), digits=0)
 
-    o1 <- rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios)
-    o2 <- round(o1, digits=2)
-    out <- list(largeR2=o2,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds)
-    
-    R2names <- colnames(o2)
+    ## create output table
+    o1 <- round(rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios),digits=2)
+    out <- list(largeR2=o1,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds)
+    ## extract names of relevant ILDS
+    R2names <- colnames(o1)
 
-
-     ## compute between group permutation testing
+    ## compute between group permutation testing
     if (bg.rounds > 0) {
         bg.test <- permudist(x,groups,rounds=bg.rounds)
-        if (!silent) {
-            if (bg.test$p.value < 0.05)
-                pvalcol <- crayon::green
-            else
-                pvalcol <- crayon::red
-            message(crayon::bold(paste0("P-value between groups: ",pvalcol(bg.test$p.value),"\n")))
-        }
+        if (!silent)
+            colorPVal(bg.test$p.value,rounds=bg.rounds)
+       
         out$bg.test <- bg.test
     }
 
@@ -165,20 +160,14 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
         confR2 <- sapply(1:length(R2names),function(x) x <- length(which(freqsR2==x)))
         confR2 <- round((((confR2+1)/(wg.rounds+1))*100),digits=3)
         names(confR2) <- R2names
-        ## out$wg.boot=wg.boot
-        if (!silent) {
-            colorILDS(confR2,wg.rounds)
-            
-            }
         out$confR2 <- confR2
         
-    }
-    
+        if (!silent)
+            colorILDS(confR2,wg.rounds)
+    }     
 
-     
     class(out) <- "ILDSR2"
     return(out)
-   
 }
 
 #' @export
@@ -186,11 +175,7 @@ print.ILDSR2 <- function(x,...) {
     print(x$largeR2)
     cat("\n")
     if (x$bg.rounds > 0) {
-        if (x$bg.test$p.value < 0.05)
-                pvalcol <- crayon::green
-            else
-                pvalcol <- crayon::red
-        message(crayon::bold(paste0("P-value between groups (",x$bg.rounds," rounds): ",pvalcol(x$bg.test$p.value),"\n")))
+        colorPVal(x$bg.test$p.value,rounds=x$bg.rounds)
     } 
 
     if (x$wg.rounds > 0)
@@ -208,22 +193,31 @@ bootstrapILDSR2 <- function(x,groups,rounds,R2tol) {
     
     
 }
+colorPVal <- function(x,rounds=NULL) {
+    if (x < 0.05)
+                pvalcol <- crayon::green
+            else
+                pvalcol <- crayon::red
+    message(crayon::bold(paste0("P-value between groups (",rounds," rounds): ",pvalcol(x),"\n")))
+
+    
+}
 
 colorILDS <- function(x,rounds=NULL) {
-    cat(crayon::bold(paste0("Bootstrapped (",rounds," rounds) confidence of relevant ILDS\n")))
-                
-            for (i in 1:length(x)) {
-                cat(" ")
-                itmp <- x[i]
-                if (itmp > 75)
-                    colfun <- crayon::green
-                else if (itmp > 50)
-                    colfun <-  crayon::yellow
-                else
-                    colfun <-  crayon::red
-                cat(colfun(paste0(crayon::bold("ILDS",names(itmp)),": ",itmp,"% ")))
-                cat("\n")
-            }
+    cat(crayon::bold(paste0("Bootstrapped (",rounds," rounds) confidence of relevant ILDS:\n")))
+    
+    for (i in 1:length(x)) {
+        cat(" ")
+        itmp <- x[i]
+        if (itmp > 75)
+            colfun <- crayon::green
+        else if (itmp > 50)
+            colfun <-  crayon::yellow
+        else
+            colfun <-  crayon::red
+        cat(colfun(paste0(crayon::bold("ILDS",names(itmp)),": ",itmp,"% ")))
+        cat("\n")
+    }
 }
 
 
@@ -254,7 +248,7 @@ colorILDS <- function(x,rounds=NULL) {
 #' @importFrom rgl text3d
 #' @export
 plot.ILDSR2 <- function(x,ref=TRUE,...) {
-     if (!inherits(x, "ILDSR2")) 
+    if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
     rn <- rownames(reftarILDS)
@@ -265,14 +259,14 @@ plot.ILDSR2 <- function(x,ref=TRUE,...) {
         reference <- x$target
     ref0 <- reference[pairing[,1],]
     ref1 <- reference[pairing[,2],]
-     D3 <- FALSE
-     if (ncol(reference)==3) {
-         D3 <- TRUE
+    D3 <- FALSE
+    if (ncol(reference)==3) {
+        D3 <- TRUE
         mydeform <- deformGrid3d
     } else
         mydeform <- deformGrid2d
-     highlight <- colnames(x$largeR2)
-     if (!is.null(highlight)) {
+    highlight <- colnames(x$largeR2)
+    if (!is.null(highlight)) {
         hm <- match(highlight,rn)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,...)
         mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=3,show=1,cex2=0,...)
