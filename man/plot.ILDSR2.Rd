@@ -4,7 +4,17 @@
 \alias{plot.ILDSR2}
 \title{Plot the ILDS with the relevant ILDS ighlighted}
 \usage{
-\method{plot}{ILDSR2}(x, ref = TRUE, relcol = "red", rescol = "black", ...)
+\method{plot}{ILDSR2}(
+  x,
+  ref = TRUE,
+  relcol = "red",
+  rescol = "black",
+  lwd = 1,
+  cex = 2,
+  col = "red",
+  pch = 19,
+  ...
+)
 }
 \arguments{
 \item{x}{output of function \code{\link{ILDSR2}}}
@@ -14,6 +24,14 @@
 \item{relcol}{color of relevant ILDs}
 
 \item{rescol}{color of "irrelevant" ILDs}
+
+\item{lwd}{numeric: define line width. Relevant ILDs are displayed by \code{3*lwd}.}
+
+\item{cex}{numeric: size of plot content}
+
+\item{col}{define color of landmarks}
+
+\item{pch}{define symbols used to plot landmarks in 2D plot.}
 
 \item{...}{additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.}
 }
@@ -35,5 +53,5 @@ gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 sex <- factor(c(rep("f",30),rep("m",29)))
 procg <- procSym(gor.dat)
 ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
-plot(ildsg)
+plot(ildsg,cex=2,pch=19)
 }

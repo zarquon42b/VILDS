@@ -193,13 +193,13 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     if (regression && !bootstrap) {
         pval <- anova(R2lm)$"Pr(>F)"[2]
         if (!silent)
-            colorPVal(pval,permu=FALSE)
+            colorPVal(round(pval,digits=3),permu=FALSE)
         out$bg.test <- pval
     }
 
     ## bootstrapping
     if (wg.rounds > 0) {
-        wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,rounds=wg.rounds,R2tol=R2tol,regression=regression,mindim=mindim),mc.cores = mc.cores)
+        wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,rounds=wg.rounds,R2tol=R2tol,regression=regression),mc.cores = mc.cores)
 
         freqsR2 <- unlist(lapply(wg.boot,match,R2names))
         confR2 <- sapply(1:length(R2names),function(x) x <- length(which(freqsR2==x)))
@@ -228,7 +228,7 @@ print.ILDSR2 <- function(x,...) {
 }
 
 
-bootstrapILDSR2 <- function(x,groups,rounds,R2tol,regression=FALSE,mindim) {
+bootstrapILDSR2 <- function(x,groups,rounds,R2tol,regression=FALSE) {
     if (!regression) {
         lev <- levels(groups)
         for (i in lev) {
@@ -236,16 +236,9 @@ bootstrapILDSR2 <- function(x,groups,rounds,R2tol,regression=FALSE,mindim) {
             x[,,groups==i] <- x[,,sample(tmpgroup,size=length(tmpgroup),replace = TRUE)]
         }
     } else {
-        error <- TRUE
-        while(error) {
-            mysample <- sample(length(groups),replace=T,size=dim(x)[3]*2)
-            if (length(unique(mysample)) >= mindim)
-                error <- FALSE
-            
-        }
+        mysample <- sample(length(groups),replace=T,size=dim(x)[3]*2)
         x <- x[,,mysample]
         groups <- groups[mysample]
-        
     }
     out <- colnames(ILDSR2(x,groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol,silent=TRUE,bootstrap=TRUE)$largeR2)
     
@@ -290,6 +283,10 @@ colorILDS <- function(x,rounds=NULL) {
 #' @param ref logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used.
 #' @param relcol color of relevant ILDs
 #' @param rescol color of "irrelevant" ILDs
+#' @param lwd numeric: define line width. Relevant ILDs are displayed by \code{3*lwd}.
+#' @param cex numeric: size of plot content
+#' @param col define color of landmarks
+#' @param pch define symbols used to plot landmarks in 2D plot.
 #' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
@@ -306,11 +303,11 @@ colorILDS <- function(x,rounds=NULL) {
 #' sex <- factor(c(rep("f",30),rep("m",29)))
 #' procg <- procSym(gor.dat)
 #' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
-#' plot(ildsg)
+#' plot(ildsg,cex=2,pch=19)
 #' @importFrom Morpho deformGrid2d deformGrid3d
 #' @importFrom rgl text3d
 #' @export
-plot.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",...) {
+plot.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,...) {
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -320,6 +317,7 @@ plot.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",...) {
         reference <- x$reference
     else
         reference <- x$target
+    
     ref0 <- reference[pairing[,1],]
     ref1 <- reference[pairing[,2],]
     D3 <- FALSE
@@ -331,14 +329,14 @@ plot.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",...) {
     highlight <- colnames(x$largeR2)
     if (!is.null(highlight)) {
         hm <- match(highlight,rn)
-        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,...)
-        mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=3,show=1,cex2=0,...)
-        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "black",lwd=1,show=1,cex2=0,...)
+        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
+        mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=lwd*3,show=1,cex2=0,cex1=0,...)
+        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "black",lwd=lwd,show=1,cex2=0,cex1=0,...)
         if (D3) {
-            rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5)
+            rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
         }
         else
-            text(reference,adj=2)
+            text(reference,adj=2,cex=cex,...)
     } else {
         mydeform(ref0,ref1)
     }
