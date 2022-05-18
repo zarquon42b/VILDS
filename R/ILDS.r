@@ -231,6 +231,7 @@ colorILDS <- function(x) {
 #' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
 #' plot(ildsg)
 #' @importFrom Morpho deformGrid2d deformGrid3d
+#' @importFrom rgl text3d
 #' @export
 plot.ILDSR2 <- function(x,ref=TRUE,...) {
      if (!inherits(x, "ILDSR2")) 
@@ -244,8 +245,9 @@ plot.ILDSR2 <- function(x,ref=TRUE,...) {
         reference <- x$target
     ref0 <- reference[pairing[,1],]
     ref1 <- reference[pairing[,2],]
-    
-    if (ncol(reference)==3) {
+     D3 <- FALSE
+     if (ncol(reference)==3) {
+         D3 <- TRUE
         mydeform <- deformGrid3d
     } else
         mydeform <- deformGrid2d
@@ -255,6 +257,11 @@ plot.ILDSR2 <- function(x,ref=TRUE,...) {
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,...)
         mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=3,show=1,cex2=0,...)
         mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "black",lwd=1,show=1,cex2=0,...)
+        if (D3) {
+            rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5)
+        }
+        else
+            text(reference,adj=2)
     } else {
         mydeform(ref0,ref1)
     }
