@@ -9,6 +9,8 @@ Description: Visualize potentially relevant shape changes within a sample of sha
 License: GPL-2
 Imports: Morpho,
     graphics,
+    crayon,
+    parallel,
     stats
 Suggests:
     shapes

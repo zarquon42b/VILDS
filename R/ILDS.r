@@ -31,11 +31,17 @@ ILDS <- function(A) {
 #'
 #' Compute R2 for Interlandmark Distances explaining between group differences
 #' @param x array containing landmarks
-#' @param groups vector containing group assignments
-#' @param reference matrix containing start config landmarks
-#' @param target matrix containing target config landmarks
-#' @param R2tol numeric: upper percentile for SILD R2 in relation to factor 
+#' @param groups vector containing group assignments. If more than two levels, a pair of needs to be specified.
+#' @param R2tol numeric: upper percentile for SILD R2 in relation to factor
+#' @param bg.rounds numeric: number of permutation rounds to assess between group differences
+#' @param wg.rounds numeric: number of rounds to assess noise within groups by bootstrapping.
+#' @param which integer (optional): in case the factor levels are > 2 this determins which factorlevels to use
+#' @param reference matrix containing start config landmarks. If NULL, it will be computed as mean for group 1.
+#' @param target matrix containing target config landmarks. If NULL, it will be computed as mean for group 2.
+#' @param mc.cores integer: number of cores to use for permutation tests.
 #' @param plot logical: if TRUE show graphical output of steps involved
+#' @param silent logical: suppress console output
+
 #' @importFrom Morpho vecx bindArr
 #' @return
 #' A list containing:
@@ -51,17 +57,56 @@ ILDS <- function(A) {
 #' data(boneData)
 #' proc <- procSym(boneLM)
 #' groups <- name2factor(boneLM,which=3)
-#' reference <- arrMean3(proc$rotated[,,groups=="ch"])
-#' target <- arrMean3(proc$rotated[,,groups=="eu"])
-#' ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
-#' @import graphics stats
+#' ilds <- ILDSR2(proc$rotated,groups,plot=TRUE,wg.rounds=999,mc.cores=2)
+#' @importFrom Morpho permudist arrMean3
+#' @import graphics stats 
 #' @export 
-ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
+ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE) {
     D <- dim(x)[2] ## get LM dimensionality
     ild <- ILDS(x)
+    xorig <- x
     allSILD <- round(ild, digits=6)
     if (length(dim(x)) == 3)
         x <- vecx(x,byrow = T)
+
+    ## set up grouping variable
+     if (!is.factor(groups))
+        groups <- factor(groups)
+    
+    if (is.factor(groups)) {
+        groups <- factor(groups)
+        lev <- levels(groups)
+
+    }
+
+    old_groups <- groups
+    if (!is.null(which)) {
+        groups <- factor(groups[groups %in% lev[which]])
+        lev <- levels(groups)
+        x <- x[which(old_groups %in% lev),]
+    }
+    ng <- length(lev)
+
+    if (ng < 2)
+        stop("provide at least two groups")
+    if (length(groups) != nrow(x))
+        warning("group affinity and sample size not corresponding!")
+
+    ## compute between group permutation testing
+    if (bg.rounds > 0) {
+        bg.test <- permudist(x,groups,rounds=bg.rounds)
+        if (!silent) {
+            message(paste0("P-value between groups: ",bg.test$p.value,"\n"))
+        }
+    }
+
+        
+    ## create reference and target
+    if (is.null(reference))
+        reference <- arrMean3(xorig[,,groups==lev[1]])
+    
+    if (is.null(target))
+        target <- arrMean3(xorig[,,groups==lev[2]])
     
     twosh <- bindArr(reference,target,along=3)
     E <- ILDS(twosh)
@@ -69,24 +114,13 @@ ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
     colnames(twosh.SILD)=c("start","target")
 
     av.twosh.SILD <- apply(twosh.SILD,1,mean);
-    ## if (plot) {
-   ##      par(mfrow=c(1,3))
-   ##      plot(twosh.SILD, asp=1)
-   ##      plot(twosh.SILD[,1], av.twosh.SILD, asp=1, main="averaged SILDs ~ obs. SILDs?", xlab="start", ylab="averaged start-target")
-   ##      plot(twosh.SILD[,2], av.twosh.SILD, asp=1, xlab="target", ylab="averaged start-target")
-   ##      par(mfrow=c(1,1))
-   ## }
-    
-    ## if (plot) {
-    ## if(interactive())
-    ##     readline("proceed? (press any key to proceed)\n")
-    ## }
+   
     ratios.twosh.SILD <- twosh.SILD$target/twosh.SILD$start
     names(ratios.twosh.SILD) <- rownames(twosh.SILD)
     ratios.twosh.SILD.sorted <- sort(ratios.twosh.SILD)
     av.twosh.SILDsortedasratios <- av.twosh.SILD[names(ratios.twosh.SILD.sorted)]
 
-   
+    ## compute R2
     all.R2 <- as.vector(cor(allSILD, as.numeric(groups))^2)
     names(all.R2) <- colnames(allSILD)
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
@@ -107,14 +141,61 @@ ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
     largerR2.rankedByRatios <- 1+length(ratios.twosh.SILD.sorted)-rank(sort(round(abs(1-ratios.twosh.SILD.sorted), digits=7)), ties.method="random")[names(largerR2)]
     outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allSILD), digits=0)
 
-
     o1 <- rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios)
     o2 <- round(o1, digits=2)
     out <- list(largeR2=o2,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target)
+    
+    R2names <- colnames(o2)
+    ## bootstrapping
+    if (wg.rounds > 0) {
+        wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,rounds=wg.rounds,R2tol=R2tol),mc.cores = mc.cores)
+
+        freqsR2 <- unlist(lapply(wg.boot,match,R2names))
+        confR2 <- sapply(1:length(R2names),function(x) x <- length(which(freqsR2==x)))
+        confR2 <- round((((confR2+1)/(wg.rounds+1))*100),digits=3)
+        names(confR2) <- R2names
+        out$wg.boot=wg.boot
+        if (!silent) {
+            cat(paste0("Bootstrapped confidence of relevant ILDS\n"))
+            
+            for (i in 1:length(confR2)) {
+                cat(" ")
+                itmp <- confR2[i]
+                if (itmp > 75)
+                    colfun <- crayon::green
+                   
+                else if (itmp > 50)
+                    colfun <-  crayon::yellow
+                else
+                    colfun <-  crayon::red
+                cat(colfun(paste0(crayon::bold("ILDS",names(itmp)),": ",itmp,"% ")))
+                cat("\n")
+            
+            }
+        out$confR2 <- confR2
+        
+        }
+    }
+
+     
     class(out) <- "ILDSR2"
     return(out)
    
 }
+
+
+bootstrapILDSR2 <- function(x,groups,rounds,R2tol) {
+    lev <- levels(groups)
+    for (i in lev) {
+        tmpgroup <- which(groups==i)
+        x[,,groups==i] <- x[,,sample(tmpgroup,size=length(tmpgroup),replace = TRUE)]
+    }
+    out <- colnames(ILDSR2(x,groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol,silent=TRUE)$largeR2)
+    
+    
+}
+
+
 
 
 #' Plot the ILDS with the relevant ILDS ighlighted
@@ -129,9 +210,7 @@ ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
 #' data(boneData)
 #' proc <- procSym(boneLM)
 #' groups <- name2factor(boneLM,which=3)
-#' reference <- arrMean3(proc$rotated[,,groups=="ch"])
-#' target <- arrMean3(proc$rotated[,,groups=="eu"])
-#' ilds <- ILDSR2(proc$rotated,groups,reference,target,plot=TRUE)
+#' ilds <- ILDSR2(proc$rotated,groups,plot=FALSE,bg.rounds=0,wg.rounds=0)
 #' plot(ilds)
 #'
 #' ## 2D Example
@@ -139,9 +218,7 @@ ILDSR2 <- function(x,groups,reference,target,R2tol=.95,plot=FALSE) {
 #' gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 #' sex <- factor(c(rep("f",30),rep("m",29)))
 #' procg <- procSym(gor.dat)
-#' refg <- arrMean3(procg$rotated[,,sex=="f"])
-#' targ <- arrMean3(procg$rotated[,,sex=="m"])
-#' ildsg <- ILDSR2(procg$rotated,sex,refg,targ,plot=FALSE)
+#' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
 #' plot(ildsg)
 #' @importFrom Morpho deformGrid2d deformGrid3d
 #' @export
