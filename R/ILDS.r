@@ -364,12 +364,17 @@ visualise.ILDSR2 <- visualize.ILDSR2
 #' @export
 plot.ILDSR2 <- function(x,...) {
     par(mfrow=c(2,2))
-   ## cor(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted)
-        plot(x$SILDstats$av.twosh.SILDsortedasratios, x$SILDstats$ratios.twosh.SILD.sorted, main="are SILD ratios varying more in smaller SILDs?", xlab="average of start & target SILD", ylab="target/start SILD ratio")
-        abline(a=1, b=0, col="grey", lwd=3, lty=1) 
-        plot(x$SILDstats$av.twosh.SILDsorted,x$allR2, main="have R2s a relation to length of SILDs?", xlab="average of start & target SILD", ylab="R2 for sample SILDs vs factor"); abline(a=quantile(x$allR2, probs=x$R2tol), b=0, col="grey", lwd=3, lty=1)
-    hist(x$SILDstats$ratios.twosh.SILD.sorted, breaks=sqrt(length(x$SILDstats$ratios.twosh.SILD.sorted)), prob=TRUE, main="hist. of target to start SILD ratios")
+
+    plot(x$SILDstats$av.twosh.SILDsortedasratios, x$SILDstats$ratios.twosh.SILD.sorted, main="SILD Ratio Variabilty vs. SILDs Values", xlab="Average of Start & Target SILD", ylab="Target/Start SILD Ratio")
+    abline(a=1, b=0, col="grey", lwd=3, lty=1) 
+
+    plot(x$SILDstats$av.twosh.SILDsorted,x$allR2, main="R2-Values vs. SILD Values", xlab="Average of Start & Target SILD", ylab="R2 for Sample SILDs vs Predictor")
+    abline(a=quantile(x$allR2, probs=x$R2tol), b=0, col="grey", lwd=3, lty=1)
+
+    hist(x$SILDstats$ratios.twosh.SILD.sorted, breaks=sqrt(length(x$SILDstats$ratios.twosh.SILD.sorted)), prob=TRUE, main="Disribution of Target/Start SILD ratios",xlab="Target/Start SILD Ratios")
     lines(density(x$SILDstats$ratios.twosh.SILD.sorted), col="red")
-    hist(x$allR2, breaks=sqrt(length(x$allR2)), prob=TRUE, main="hist. of target to start SILD R2s"); lines(density(x$allR2), col="red");
+
+    hist(x$allR2, breaks=sqrt(length(x$allR2)), prob=TRUE, main=" R2-Value Distribution",xlab="R2-Values")
+    lines(density(x$allR2), col="red")
     par(mfrow=c(1,1))
 }
