@@ -161,7 +161,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
         confR2 <- sapply(1:length(R2names),function(x) x <- length(which(freqsR2==x)))
         confR2 <- round((((confR2+1)/(wg.rounds+1))*100),digits=3)
         names(confR2) <- R2names
-        out$wg.boot=wg.boot
+        ## out$wg.boot=wg.boot
         if (!silent) {
             colorILDS(confR2)
             
