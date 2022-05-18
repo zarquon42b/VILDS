@@ -63,12 +63,12 @@ ILDS <- function(A) {
 #' groups <- name2factor(boneLM,which=3)
 #' ilds <- ILDSR2(proc$rotated,groups,plot=TRUE,wg.rounds=99,mc.cores=2)
 #' if (interactive())
-#' plot(ilds)
+#' visualize(ilds)
 #' ## use covariate
 #' \dontrun{
 #' ildsLM <- ILDSR2(proc$rotated,groups=proc$size,plot=TRUE,wg.rounds=99,mc.cores=2)
 #' if (interactive())
-#' plot(ildsLM)
+#' visualize(ildsLM)
 #' }
 #' @importFrom Morpho permudist arrMean3
 #' @import graphics stats 
@@ -158,19 +158,11 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         
     }
     names(all.R2) <- colnames(allSILD)
+    
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
     av.twosh.SILDsorted <- av.twosh.SILD[names(all.R2sorted)]
-                                        # cor(all.R2sorted, av.twosh.SILDsorted)
-    if (plot) {
-        par(mfrow=c(2,2))
-        cor(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted)
-        plot(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted, main="are SILD ratios varying more in smaller SILDs?", xlab="average of start & target SILD", ylab="target/start SILD ratio")
-        abline(a=1, b=0, col="grey", lwd=3, lty=1) 
-        plot(av.twosh.SILDsorted,all.R2sorted, main="have R2s a relation to length of SILDs?", xlab="average of start & target SILD", ylab="R2 for sample SILDs vs factor"); abline(a=quantile(all.R2sorted, probs=R2tol), b=0, col="grey", lwd=3, lty=1)
-        hist(ratios.twosh.SILD.sorted, breaks=sqrt(length(ratios.twosh.SILD.sorted)), prob=TRUE, main="hist. of target to start SILD ratios"); lines(density(ratios.twosh.SILD.sorted), col="red")
-        hist(all.R2sorted, breaks=sqrt(length(all.R2sorted)), prob=TRUE, main="hist. of target to start SILD R2s"); lines(density(all.R2sorted), col="red"); par(mfrow=c(1,1))
-    }
-
+    SILDstats <- list(av.twosh.SILDsorted=av.twosh.SILDsorted,ratios.twosh.SILD.sorted=ratios.twosh.SILD.sorted,av.twosh.SILDsortedasratios=av.twosh.SILDsortedasratios)
+                                       
     largerR2 <- round(subset(all.R2sorted, all.R2sorted>stats::quantile(all.R2sorted, probs=R2tol)), digits=7)
     ratios.twosh.SILD.ofBiggestR2 <- round(ratios.twosh.SILD[names(largerR2)], digits=7) # finds the corresponding SILDs ratios
     largerR2.rankedByRatios <- 1+length(ratios.twosh.SILD.sorted)-rank(sort(round(abs(1-ratios.twosh.SILD.sorted), digits=7)), ties.method="random")[names(largerR2)]
@@ -178,7 +170,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
 
     ## create output table
     o1 <- round(rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios),digits=2)
-    out <- list(largeR2=o1,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds)
+    out <- list(largeR2=o1,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds,SILDstats=SILDstats)
     ## extract names of relevant ILDS
     R2names <- colnames(o1)
 
@@ -212,6 +204,11 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     }     
 
     class(out) <- "ILDSR2"
+
+    if (plot) {
+        plot(out)
+    }
+    
     return(out)
 }
 
@@ -295,7 +292,7 @@ colorILDS <- function(x,rounds=NULL) {
 #' proc <- procSym(boneLM)
 #' groups <- name2factor(boneLM,which=3)
 #' ilds <- ILDSR2(proc$rotated,groups,plot=FALSE,bg.rounds=0,wg.rounds=0)
-#' plot(ilds)
+#' visualize(ilds)
 #'
 #' ## 2D Example
 #' require(shapes)
@@ -303,11 +300,17 @@ colorILDS <- function(x,rounds=NULL) {
 #' sex <- factor(c(rep("f",30),rep("m",29)))
 #' procg <- procSym(gor.dat)
 #' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
-#' plot(ildsg,cex=2,pch=19)
+#' visualize(ildsg,cex=2,pch=19)
 #' @importFrom Morpho deformGrid2d deformGrid3d
 #' @importFrom rgl text3d
+#' @rdname visualize
 #' @export
-plot.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,...) {
+visualize <- function(x,...) UseMethod("visualize")
+
+#' @export
+#' @rdname visualize
+#' @method visualize ILDSR2
+visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,...) {
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -342,3 +345,23 @@ plot.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="
     }
 } 
 
+
+
+
+#' Plot graphical report for ILDSR2
+#'
+#' Plot graphical report for ILDSR2
+#' @param x output of \code{\link{ILDSR2}}
+#' @param ... additonal parameter currently not used.
+#' @export
+plot.ILDSR2 <- function(x,...) {
+    par(mfrow=c(2,2))
+   ## cor(av.twosh.SILDsortedasratios, ratios.twosh.SILD.sorted)
+        plot(x$SILDstats$av.twosh.SILDsortedasratios, x$SILDstats$ratios.twosh.SILD.sorted, main="are SILD ratios varying more in smaller SILDs?", xlab="average of start & target SILD", ylab="target/start SILD ratio")
+        abline(a=1, b=0, col="grey", lwd=3, lty=1) 
+        plot(x$SILDstats$av.twosh.SILDsorted,x$allR2, main="have R2s a relation to length of SILDs?", xlab="average of start & target SILD", ylab="R2 for sample SILDs vs factor"); abline(a=quantile(x$allR2, probs=x$R2tol), b=0, col="grey", lwd=3, lty=1)
+    hist(x$SILDstats$ratios.twosh.SILD.sorted, breaks=sqrt(length(x$SILDstats$ratios.twosh.SILD.sorted)), prob=TRUE, main="hist. of target to start SILD ratios")
+    lines(density(x$SILDstats$ratios.twosh.SILD.sorted), col="red")
+    hist(x$allR2, breaks=sqrt(length(x$allR2)), prob=TRUE, main="hist. of target to start SILD R2s"); lines(density(x$allR2), col="red");
+    par(mfrow=c(1,1))
+}

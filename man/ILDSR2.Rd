@@ -66,11 +66,11 @@ proc <- procSym(boneLM)
 groups <- name2factor(boneLM,which=3)
 ilds <- ILDSR2(proc$rotated,groups,plot=TRUE,wg.rounds=99,mc.cores=2)
 if (interactive())
-plot(ilds)
+visualize(ilds)
 ## use covariate
 \dontrun{
 ildsLM <- ILDSR2(proc$rotated,groups=proc$size,plot=TRUE,wg.rounds=99,mc.cores=2)
 if (interactive())
-plot(ildsLM)
+visualize(ildsLM)
 }
 }
