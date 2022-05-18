@@ -345,6 +345,14 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     }
 } 
 
+#' @rdname visualize
+#' @export
+visualise <- visualize
+
+
+#' @rdname visualize
+#' @export
+visualise.ILDSR2 <- visualize.ILDSR2
 
 
 

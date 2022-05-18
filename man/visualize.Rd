@@ -3,11 +3,27 @@
 \name{visualize}
 \alias{visualize}
 \alias{visualize.ILDSR2}
+\alias{visualise}
+\alias{visualise.ILDSR2}
 \title{Plot the ILDS with the relevant ILDS ighlighted}
 \usage{
 visualize(x, ...)
 
 \method{visualize}{ILDSR2}(
+  x,
+  ref = TRUE,
+  relcol = "red",
+  rescol = "black",
+  lwd = 1,
+  cex = 2,
+  col = "red",
+  pch = 19,
+  ...
+)
+
+visualise(x, ...)
+
+\method{visualise}{ILDSR2}(
   x,
   ref = TRUE,
   relcol = "red",
