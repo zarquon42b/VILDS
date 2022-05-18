@@ -86,8 +86,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     if ("bootstrap" %in% names(args)) {
         bootstrap <- args$bootstrap
     }
-    
-       
+
     ## set up grouping variable
     regression <- FALSE
     if (!is.factor(groups) && is.numeric(groups)) {
@@ -99,8 +98,8 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     if (is.factor(groups)) {
         groups <- factor(groups)
         lev <- levels(groups)
-
     }
+    
     ## factor case
     if (!regression) {
         old_groups <- groups
@@ -116,8 +115,6 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         if (length(groups) != nrow(x))
             warning("group affinity and sample size not corresponding!")
 
-        
-        
         ## create reference and target
         if (is.null(reference))
             reference <- arrMean3(xorig[,,groups==lev[1]])
@@ -135,13 +132,12 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         reference <- twosh[,,1]
         target <- twosh[,,2]
     }
-
     
     E <- ILDS(twosh)
     twosh.SILD <- round(as.data.frame(t(E)), digits=6)
     colnames(twosh.SILD)=c("start","target")
 
-    av.twosh.SILD <- apply(twosh.SILD,1,mean);
+    av.twosh.SILD <- apply(twosh.SILD,1,mean)
     
     ratios.twosh.SILD <- twosh.SILD$target/twosh.SILD$start
     names(ratios.twosh.SILD) <- rownames(twosh.SILD)
@@ -155,12 +151,13 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         R2lm <- (lm(allSILD~groups))
         tmplm <- summary(R2lm)
         all.R2 <- sapply(tmplm,function(x) x <- x$r.squared)
-        
     }
     names(all.R2) <- colnames(allSILD)
     
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
     av.twosh.SILDsorted <- av.twosh.SILD[names(all.R2sorted)]
+
+    ## combine all sample wide R2 stats in a named list
     SILDstats <- list(av.twosh.SILDsorted=av.twosh.SILDsorted,ratios.twosh.SILD.sorted=ratios.twosh.SILD.sorted,av.twosh.SILDsortedasratios=av.twosh.SILDsortedasratios)
                                        
     largerR2 <- round(subset(all.R2sorted, all.R2sorted>stats::quantile(all.R2sorted, probs=R2tol)), digits=7)
