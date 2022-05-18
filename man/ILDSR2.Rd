@@ -48,6 +48,10 @@ A list containing:
 \item{reftarILDS}{matrix with columns containing ILDs for reference and target shapes}
 \item{sampleILD}{matrix containing ILDs of entire sample}
 \item{R2tol}{R2-threshold used}
+\item{reference}{reference used}
+\item{target}{target used}
+\item{bg.test}{result from between-group testing}
+\item{confR2}{confidence for relevant ILDs from bootstrapping}
 }
 \description{
 Compute R2 for Interlandmark Distances explaining between group differences

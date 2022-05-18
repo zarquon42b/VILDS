@@ -50,7 +50,10 @@ ILDS <- function(A) {
 #' \item{reftarILDS}{matrix with columns containing ILDs for reference and target shapes}
 #' \item{sampleILD}{matrix containing ILDs of entire sample}
 #' \item{R2tol}{R2-threshold used}
-
+#' \item{reference}{reference used}
+#' \item{target}{target used}
+#' \item{bg.test}{result from between-group testing}
+#' \item{confR2}{confidence for relevant ILDs from bootstrapping}
 #' 
 #' @examples
 #' require(Morpho)
@@ -92,14 +95,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     if (length(groups) != nrow(x))
         warning("group affinity and sample size not corresponding!")
 
-    ## compute between group permutation testing
-    if (bg.rounds > 0) {
-        bg.test <- permudist(x,groups,rounds=bg.rounds)
-        if (!silent) {
-            message(paste0("P-value between groups: ",bg.test$p.value,"\n"))
-        }
-    }
-
+   
         
     ## create reference and target
     if (is.null(reference))
@@ -146,6 +142,17 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=NULL,ref
     out <- list(largeR2=o2,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target)
     
     R2names <- colnames(o2)
+
+
+     ## compute between group permutation testing
+    if (bg.rounds > 0) {
+        bg.test <- permudist(x,groups,rounds=bg.rounds)
+        if (!silent) {
+            message(paste0("P-value between groups: ",bg.test$p.value,"\n"))
+        }
+        out$bg.test <- bg.test
+    }
+
     ## bootstrapping
     if (wg.rounds > 0) {
         wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,rounds=wg.rounds,R2tol=R2tol),mc.cores = mc.cores)
