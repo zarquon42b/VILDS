@@ -70,6 +70,13 @@ ILDS <- function(A) {
 #' if (interactive())
 #' visualize(ildsLM)
 #' }
+#'
+#' ## 2D Case with size as predictor
+#' require(shapes)
+#' require(Morpho)
+#' gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
+#' procg <- procSym(gor.dat)
+#' ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1)
 #' @importFrom Morpho permudist arrMean3
 #' @import graphics stats 
 #' @export 
@@ -138,12 +145,13 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     colnames(twosh.SILD)=c("start","target")
 
     av.twosh.SILD <- apply(twosh.SILD,1,mean)
-    
+
+   
     ratios.twosh.SILD <- twosh.SILD$target/twosh.SILD$start
     names(ratios.twosh.SILD) <- rownames(twosh.SILD)
     ratios.twosh.SILD.sorted <- sort(ratios.twosh.SILD)
     av.twosh.SILDsortedasratios <- av.twosh.SILD[names(ratios.twosh.SILD.sorted)]
-
+    
     ## compute R2
     if (!regression)
         all.R2 <- as.vector(cor(allSILD, as.numeric(groups))^2)
@@ -182,7 +190,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     if (regression && !bootstrap) {
         pval <- anova(R2lm)$"Pr(>F)"[2]
         if (!silent)
-            colorPVal(round(pval,digits=3),permu=FALSE)
+            colorPVal(format(pval,scientific=T,digits=3),permu=FALSE)
         out$bg.test <- pval
     }
 
@@ -281,6 +289,9 @@ colorILDS <- function(x,rounds=NULL) {
 #' @param cex numeric: size of plot content
 #' @param col define color of landmarks
 #' @param pch define symbols used to plot landmarks in 2D plot.
+#' @param confcol vector of colors associated with confidence. Must be of \code{length(contol)+1}.
+#' @param conftol vector: set thresholds for confidence coloring
+#' @param useconf logical: if TRUE, highlighting according to supported confidence of ILD is applied.
 #' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
@@ -298,6 +309,9 @@ colorILDS <- function(x,rounds=NULL) {
 #' procg <- procSym(gor.dat)
 #' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
 #' visualize(ildsg,cex=2,pch=19)
+#'
+#' ## use custom color and thresholds
+#' visualize(ildsg,cex=2,pch=19,confcol=rainbow(5),conftol=c(0.9,0.6,0.4))
 #' @importFrom Morpho deformGrid2d deformGrid3d
 #' @importFrom rgl text3d
 #' @rdname visualize
@@ -307,7 +321,8 @@ visualize <- function(x,...) UseMethod("visualize")
 #' @export
 #' @rdname visualize
 #' @method visualize ILDSR2
-visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,...) {
+visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,confcol=c("green","orange","red"),conftol=c(75,50),useconf=TRUE,...) {
+   
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -326,20 +341,37 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         mydeform <- deformGrid3d
     } else
         mydeform <- deformGrid2d
+    if (is.null(x$confR2) || ! useconf) {
     highlight <- colnames(x$largeR2)
     if (!is.null(highlight)) {
         hm <- match(highlight,rn)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
-        mydeform(ref0[hm,],ref1[hm,],add=T,lcol = "red",lwd=lwd*3,show=1,cex2=0,cex1=0,...)
-        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = "black",lwd=lwd,show=1,cex2=0,cex1=0,...)
-        if (D3) {
+        mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,...)
+        mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
+       
+    } else {
+        mydeform(ref0,ref1)
+    } } else {
+          highlight <- names(x$confR2)
+          mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
+          hm <- match(highlight,rn)
+          myinterval <- getInterval(x$confR2,conftol)
+          for (i in 1:3) {
+              tmp <- which(myinterval == i)
+              if (length(tmp)) {
+                  hmtmp <- match(highlight[tmp],rn)
+                  mydeform(ref0[hmtmp,,drop=FALSE],ref1[hmtmp,,drop=FALSE],add=T,lcol =confcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,...)
+              }
+          }          
+          mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
+
+          
+      }
+     if (D3) {
             rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
         }
         else
             text(reference,adj=2,cex=cex,...)
-    } else {
-        mydeform(ref0,ref1)
-    }
 } 
 
 #' @rdname visualize
@@ -374,4 +406,14 @@ plot.ILDSR2 <- function(x,...) {
     hist(x$allR2, breaks=sqrt(length(x$allR2)), prob=TRUE, main=" R2-Value Distribution",xlab="R2-Values")
     lines(density(x$allR2), col="red")
     par(mfrow=c(1,1))
+}
+
+
+getInterval <- function(x,intervals) {    
+    tmp <- sapply(x,function(x) x > intervals)
+    tmp <- rbind(tmp,TRUE)
+    chk <- apply(tmp,2,function(x) x <- which(x))
+    chk <- sapply(chk,min)
+    return(chk)
+        
 }

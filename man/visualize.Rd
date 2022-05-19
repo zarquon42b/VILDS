@@ -18,6 +18,9 @@ visualize(x, ...)
   cex = 2,
   col = "red",
   pch = 19,
+  confcol = c("green", "orange", "red"),
+  conftol = c(75, 50),
+  useconf = TRUE,
   ...
 )
 
@@ -32,6 +35,9 @@ visualise(x, ...)
   cex = 2,
   col = "red",
   pch = 19,
+  confcol = c("green", "orange", "red"),
+  conftol = c(75, 50),
+  useconf = TRUE,
   ...
 )
 }
@@ -53,6 +59,12 @@ visualise(x, ...)
 \item{col}{define color of landmarks}
 
 \item{pch}{define symbols used to plot landmarks in 2D plot.}
+
+\item{confcol}{vector of colors associated with confidence. Must be of \code{length(contol)+1}.}
+
+\item{conftol}{vector: set thresholds for confidence coloring}
+
+\item{useconf}{logical: if TRUE, highlighting according to supported confidence of ILD is applied.}
 }
 \description{
 Plot the ILDS with the relevant ILDS ighlighted
@@ -73,4 +85,7 @@ sex <- factor(c(rep("f",30),rep("m",29)))
 procg <- procSym(gor.dat)
 ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
 visualize(ildsg,cex=2,pch=19)
+
+## use custom color and thresholds
+visualize(ildsg,cex=2,pch=19,confcol=rainbow(5),conftol=c(0.9,0.6,0.4))
 }

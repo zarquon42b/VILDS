@@ -73,4 +73,11 @@ ildsLM <- ILDSR2(proc$rotated,groups=proc$size,plot=TRUE,wg.rounds=99,mc.cores=2
 if (interactive())
 visualize(ildsLM)
 }
+
+## 2D Case with size as predictor
+require(shapes)
+require(Morpho)
+gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
+procg <- procSym(gor.dat)
+ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1)
 }
