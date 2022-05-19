@@ -32,7 +32,7 @@ ILDS <- function(A) {
 #' Compute R2 for Interlandmark Distances explaining between group differences
 #' @param x array containing landmarks
 #' @param groups vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}
-#' @param R2tol numeric: upper percentile for SILD R2 in relation to factor
+#' @param R2tol numeric: upper percentile for ILD R2 in relation to factor
 #' @param bg.rounds numeric: number of permutation rounds to assess between group differences
 #' @param wg.rounds numeric: number of rounds to assess noise within groups by bootstrapping.
 #' @param which integer (optional): in case the factor levels are > 2 this determins which factorlevels to use
@@ -84,8 +84,8 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     D <- dim(x)[2] ## get LM dimensionality
     ild <- ILDS(x)
     xorig <- x
-    allSILD <- round(ild, digits=6)
-    mindim <- ncol(allSILD)
+    allILD <- round(ild, digits=6)
+    mindim <- ncol(allILD)
     if (length(dim(x)) == 3)
         x <- vecx(x,byrow = T)
     bootstrap <- FALSE
@@ -141,41 +141,41 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     }
     
     E <- ILDS(twosh)
-    twosh.SILD <- round(as.data.frame(t(E)), digits=6)
-    colnames(twosh.SILD)=c("start","target")
+    twosh.ILD <- round(as.data.frame(t(E)), digits=6)
+    colnames(twosh.ILD)=c("start","target")
 
-    av.twosh.SILD <- apply(twosh.SILD,1,mean)
+    av.twosh.ILD <- apply(twosh.ILD,1,mean)
 
    
-    ratios.twosh.SILD <- twosh.SILD$target/twosh.SILD$start
-    names(ratios.twosh.SILD) <- rownames(twosh.SILD)
-    ratios.twosh.SILD.sorted <- sort(ratios.twosh.SILD)
-    av.twosh.SILDsortedasratios <- av.twosh.SILD[names(ratios.twosh.SILD.sorted)]
+    ratios.twosh.ILD <- twosh.ILD$target/twosh.ILD$start
+    names(ratios.twosh.ILD) <- rownames(twosh.ILD)
+    ratios.twosh.ILD.sorted <- sort(ratios.twosh.ILD)
+    av.twosh.ILDsortedasratios <- av.twosh.ILD[names(ratios.twosh.ILD.sorted)]
     
     ## compute R2
     if (!regression)
-        all.R2 <- as.vector(cor(allSILD, as.numeric(groups))^2)
+        all.R2 <- as.vector(cor(allILD, as.numeric(groups))^2)
     else {
-        R2lm <- (lm(allSILD~groups))
+        R2lm <- (lm(allILD~groups))
         tmplm <- summary(R2lm)
         all.R2 <- sapply(tmplm,function(x) x <- x$r.squared)
     }
-    names(all.R2) <- colnames(allSILD)
+    names(all.R2) <- colnames(allILD)
     
-    all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
-    av.twosh.SILDsorted <- av.twosh.SILD[names(all.R2sorted)]
+    all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of ILDs compared to factor in total sample
+    av.twosh.ILDsorted <- av.twosh.ILD[names(all.R2sorted)]
 
     ## combine all sample wide R2 stats in a named list
-    SILDstats <- list(av.twosh.SILDsorted=av.twosh.SILDsorted,ratios.twosh.SILD.sorted=ratios.twosh.SILD.sorted,av.twosh.SILDsortedasratios=av.twosh.SILDsortedasratios)
+    ILDstats <- list(av.twosh.ILDsorted=av.twosh.ILDsorted,ratios.twosh.ILD.sorted=ratios.twosh.ILD.sorted,av.twosh.ILDsortedasratios=av.twosh.ILDsortedasratios)
                                        
     largerR2 <- round(subset(all.R2sorted, all.R2sorted>stats::quantile(all.R2sorted, probs=R2tol)), digits=7)
-    ratios.twosh.SILD.ofBiggestR2 <- round(ratios.twosh.SILD[names(largerR2)], digits=7) # finds the corresponding SILDs ratios
-    largerR2.rankedByRatios <- 1+length(ratios.twosh.SILD.sorted)-rank(sort(round(abs(1-ratios.twosh.SILD.sorted), digits=7)), ties.method="random")[names(largerR2)]
-    outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allSILD), digits=0)
+    ratios.twosh.ILD.ofBiggestR2 <- round(ratios.twosh.ILD[names(largerR2)], digits=7) # finds the corresponding ILDs ratios
+    largerR2.rankedByRatios <- 1+length(ratios.twosh.ILD.sorted)-rank(sort(round(abs(1-ratios.twosh.ILD.sorted), digits=7)), ties.method="random")[names(largerR2)]
+    outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allILD), digits=0)
 
     ## create output table
-    o1 <- round(rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios),digits=2)
-    out <- list(largeR2=o1,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds,SILDstats=SILDstats)
+    o1 <- round(rbind(largerR2, ratios.twosh.ILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios),digits=2)
+    out <- list(largeR2=o1,allR2=all.R2sorted,reftarILDS=twosh.ILD,sampleILD=allILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds,ILDstats=ILDstats)
     ## extract names of relevant ILDS
     R2names <- colnames(o1)
 
@@ -394,14 +394,14 @@ visualise.ILDSR2 <- visualize.ILDSR2
 plot.ILDSR2 <- function(x,...) {
     par(mfrow=c(2,2))
 
-    plot(x$SILDstats$av.twosh.SILDsortedasratios, x$SILDstats$ratios.twosh.SILD.sorted, main="ILD Ratio Variabilty vs. ILDs Values", xlab="Average of Start & Target ILD", ylab="Target/Start ILD Ratio")
+    plot(x$ILDstats$av.twosh.ILDsortedasratios, x$ILDstats$ratios.twosh.ILD.sorted, main="ILD Ratio Variabilty vs. ILDs Values", xlab="Average of Start & Target ILD", ylab="Target/Start ILD Ratio")
     abline(a=1, b=0, col="grey", lwd=3, lty=1) 
 
-    plot(x$SILDstats$av.twosh.SILDsorted,x$allR2, main="R2-Values vs. SILD Values", xlab="Average of Start & Target ILD", ylab="R2 for Sample ILDs vs Predictor")
+    plot(x$ILDstats$av.twosh.ILDsorted,x$allR2, main="R2-Values vs. ILD Values", xlab="Average of Start & Target ILD", ylab="R2 for Sample ILDs vs Predictor")
     abline(a=quantile(x$allR2, probs=x$R2tol), b=0, col="grey", lwd=3, lty=1)
 
-    hist(x$SILDstats$ratios.twosh.SILD.sorted, breaks=sqrt(length(x$SILDstats$ratios.twosh.SILD.sorted)), prob=TRUE, main="Disribution of Target/Start ILD ratios",xlab="Target/Start ILD Ratios")
-    lines(density(x$SILDstats$ratios.twosh.SILD.sorted), col="red")
+    hist(x$ILDstats$ratios.twosh.ILD.sorted, breaks=sqrt(length(x$ILDstats$ratios.twosh.ILD.sorted)), prob=TRUE, main="Disribution of Target/Start ILD ratios",xlab="Target/Start ILD Ratios")
+    lines(density(x$ILDstats$ratios.twosh.ILD.sorted), col="red")
 
     hist(x$allR2, breaks=sqrt(length(x$allR2)), prob=TRUE, main=" R2-Value Distribution",xlab="R2-Values")
     lines(density(x$allR2), col="red")
