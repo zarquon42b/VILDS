@@ -322,7 +322,7 @@ visualize <- function(x,...) UseMethod("visualize")
 #' @rdname visualize
 #' @method visualize ILDSR2
 visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,confcol=c("green","orange","red"),conftol=c(75,50),useconf=TRUE,...) {
-   
+    
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -342,36 +342,37 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     } else
         mydeform <- deformGrid2d
     if (is.null(x$confR2) || ! useconf) {
-    highlight <- colnames(x$largeR2)
-    if (!is.null(highlight)) {
-        hm <- match(highlight,rn)
-        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
-        mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,...)
-        mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
-       
-    } else {
-        mydeform(ref0,ref1)
-    } } else {
-          highlight <- names(x$confR2)
-          mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
-          hm <- match(highlight,rn)
-          myinterval <- getInterval(x$confR2,conftol)
-          for (i in 1:3) {
-              tmp <- which(myinterval == i)
-              if (length(tmp)) {
-                  hmtmp <- match(highlight[tmp],rn)
-                  mydeform(ref0[hmtmp,,drop=FALSE],ref1[hmtmp,,drop=FALSE],add=T,lcol =confcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,...)
-              }
-          }          
-          mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
-
-          
-      }
-     if (D3) {
-            rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
+        highlight <- colnames(x$largeR2)
+        if (!is.null(highlight)) {
+            hm <- match(highlight,rn)
+            mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
+            mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
+            mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+            
+            
         }
-        else
-            text(reference,adj=2,cex=cex,...)
+    } else {
+        highlight <- names(x$confR2)
+        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
+        hm <- match(highlight,rn)
+        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
+        myinterval <- getInterval(x$confR2,conftol)
+        for (i in 1:3) {
+            tmp <- which(myinterval == i)
+            if (length(tmp)) {
+                hmtmp <- match(highlight[tmp],rn)
+                mydeform(ref0[hmtmp,,drop=FALSE],ref1[hmtmp,,drop=FALSE],add=T,lcol =confcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+            }
+        }
+        
+    }
+    if (D3) {
+        rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
+    }
+    else {
+        text(reference,adj=2,cex=cex,...)
+        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
+    }
 } 
 
 #' @rdname visualize
