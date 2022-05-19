@@ -394,13 +394,13 @@ visualise.ILDSR2 <- visualize.ILDSR2
 plot.ILDSR2 <- function(x,...) {
     par(mfrow=c(2,2))
 
-    plot(x$SILDstats$av.twosh.SILDsortedasratios, x$SILDstats$ratios.twosh.SILD.sorted, main="SILD Ratio Variabilty vs. SILDs Values", xlab="Average of Start & Target SILD", ylab="Target/Start SILD Ratio")
+    plot(x$SILDstats$av.twosh.SILDsortedasratios, x$SILDstats$ratios.twosh.SILD.sorted, main="ILD Ratio Variabilty vs. ILDs Values", xlab="Average of Start & Target ILD", ylab="Target/Start ILD Ratio")
     abline(a=1, b=0, col="grey", lwd=3, lty=1) 
 
-    plot(x$SILDstats$av.twosh.SILDsorted,x$allR2, main="R2-Values vs. SILD Values", xlab="Average of Start & Target SILD", ylab="R2 for Sample SILDs vs Predictor")
+    plot(x$SILDstats$av.twosh.SILDsorted,x$allR2, main="R2-Values vs. SILD Values", xlab="Average of Start & Target ILD", ylab="R2 for Sample ILDs vs Predictor")
     abline(a=quantile(x$allR2, probs=x$R2tol), b=0, col="grey", lwd=3, lty=1)
 
-    hist(x$SILDstats$ratios.twosh.SILD.sorted, breaks=sqrt(length(x$SILDstats$ratios.twosh.SILD.sorted)), prob=TRUE, main="Disribution of Target/Start SILD ratios",xlab="Target/Start SILD Ratios")
+    hist(x$SILDstats$ratios.twosh.SILD.sorted, breaks=sqrt(length(x$SILDstats$ratios.twosh.SILD.sorted)), prob=TRUE, main="Disribution of Target/Start ILD ratios",xlab="Target/Start ILD Ratios")
     lines(density(x$SILDstats$ratios.twosh.SILD.sorted), col="red")
 
     hist(x$allR2, breaks=sqrt(length(x$allR2)), prob=TRUE, main=" R2-Value Distribution",xlab="R2-Values")
