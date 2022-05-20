@@ -24,7 +24,7 @@ ILDSR2(
 
 \item{groups}{vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}}
 
-\item{R2tol}{numeric: upper percentile for ILD R2 in relation to factor}
+\item{R2tol}{numeric: upper percentile for SILD R2 in relation to factor}
 
 \item{bg.rounds}{numeric: number of permutation rounds to assess between group differences}
 

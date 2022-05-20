@@ -21,6 +21,8 @@ visualize(x, ...)
   confcol = c("green", "orange", "red"),
   conftol = c(75, 50),
   useconf = TRUE,
+  add = FALSE,
+  plot.legend = FALSE,
   ...
 )
 
@@ -38,6 +40,8 @@ visualise(x, ...)
   confcol = c("green", "orange", "red"),
   conftol = c(75, 50),
   useconf = TRUE,
+  add = FALSE,
+  plot.legend = FALSE,
   ...
 )
 }
@@ -65,6 +69,10 @@ visualise(x, ...)
 \item{conftol}{vector: set thresholds for confidence coloring}
 
 \item{useconf}{logical: if TRUE, highlighting according to supported confidence of ILD is applied.}
+
+\item{add}{logical: if TRUE, plot is added to an existin one.}
+
+\item{plot.legend}{logical: if TRUE, a legend is added to the plots with information on the coloring scheme.}
 }
 \description{
 Plot the ILDS with the relevant ILDS ighlighted
@@ -83,7 +91,7 @@ require(shapes)
 gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 sex <- factor(c(rep("f",30),rep("m",29)))
 procg <- procSym(gor.dat)
-ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
+ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=99)
 visualize(ildsg,cex=2,pch=19)
 
 ## use custom color and thresholds

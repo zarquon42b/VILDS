@@ -292,6 +292,8 @@ colorILDS <- function(x,rounds=NULL) {
 #' @param confcol vector of colors associated with confidence. Must be of \code{length(contol)+1}.
 #' @param conftol vector: set thresholds for confidence coloring
 #' @param useconf logical: if TRUE, highlighting according to supported confidence of ILD is applied.
+#' @param add logical: if TRUE, plot is added to an existin one.
+#' @param plot.legend logical: if TRUE, a legend is added to the plots with information on the coloring scheme.
 #' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
@@ -307,7 +309,7 @@ colorILDS <- function(x,rounds=NULL) {
 #' gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 #' sex <- factor(c(rep("f",30),rep("m",29)))
 #' procg <- procSym(gor.dat)
-#' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=0)
+#' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=99)
 #' visualize(ildsg,cex=2,pch=19)
 #'
 #' ## use custom color and thresholds
@@ -321,7 +323,7 @@ visualize <- function(x,...) UseMethod("visualize")
 #' @export
 #' @rdname visualize
 #' @method visualize ILDSR2
-visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,confcol=c("green","orange","red"),conftol=c(75,50),useconf=TRUE,...) {
+visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,confcol=c("green","orange","red"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,...) {
     
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
@@ -345,15 +347,17 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         highlight <- colnames(x$largeR2)
         if (!is.null(highlight)) {
             hm <- match(highlight,rn)
-            mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
+            mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
             mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
             mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
             
             
         }
     } else {
+        leg.txt <- c(conftol,conftol[length(conftol)])
+        leg.txt <- paste(c(rep(">",length(conftol)),"<"),leg.txt,"%")
         highlight <- names(x$confR2)
-        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,...)
+        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
         hm <- match(highlight,rn)
         mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
         myinterval <- getInterval(x$confR2,conftol)
@@ -368,10 +372,17 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     }
     if (D3) {
         rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
+        if (!is.null(x$confR2) && useconf && plot.legend) {
+            if (interactive())
+               answer <- readline("Please resize 3D window before legend is plotted and press any key")
+             rgl::legend3d("topleft",leg.txt,col=confcol,title = "Confidence",lty=1,lwd=3)
+         }
     }
     else {
         text(reference,adj=2,cex=cex,...)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
+        if (!is.null(x$confR2) && useconf && plot.legend)
+            legend("topleft",leg.txt,col=confcol,title = "Confidence",lty=1,lwd=3)
     }
 } 
 
