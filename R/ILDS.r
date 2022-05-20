@@ -32,7 +32,7 @@ ILDS <- function(A) {
 #' Compute R2 for Interlandmark Distances explaining between group differences
 #' @param x array containing landmarks
 #' @param groups vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}
-#' @param R2tol numeric: upper percentile for SILD R2 in relation to factor
+#' @param R2tol numeric: upper percentile for ILD R2 in relation to factor
 #' @param bg.rounds numeric: number of permutation rounds to assess between group differences
 #' @param wg.rounds numeric: number of rounds to assess noise within groups by bootstrapping.
 #' @param which integer (optional): in case the factor levels are > 2 this determins which factorlevels to use
@@ -46,7 +46,7 @@ ILDS <- function(A) {
 #' @importFrom Morpho vecx bindArr
 #' @return
 #' A list containing:
-#' \item{largeR2}{containing landmark information with the highest R2 (Andrea please specify here)}
+#' \item{relevantILDs}{containing landmark information with the highest R2-values}
 #' \item{allR2}{vector with ILD specific R2-values, sorted decreasingly}
 #' \item{reftarILDS}{matrix with columns containing ILDs for reference and target shapes}
 #' \item{sampleILD}{matrix containing ILDs of entire sample}
@@ -84,8 +84,8 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     D <- dim(x)[2] ## get LM dimensionality
     ild <- ILDS(x)
     xorig <- x
-    allSILD <- round(ild, digits=6)
-    mindim <- ncol(allSILD)
+    allILD <- round(ild, digits=6)
+    mindim <- ncol(allILD)
     if (length(dim(x)) == 3)
         x <- vecx(x,byrow = T)
     bootstrap <- FALSE
@@ -141,41 +141,41 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     }
     
     E <- ILDS(twosh)
-    twosh.SILD <- round(as.data.frame(t(E)), digits=6)
-    colnames(twosh.SILD)=c("start","target")
+    twosh.ILD <- round(as.data.frame(t(E)), digits=6)
+    colnames(twosh.ILD)=c("start","target")
 
-    av.twosh.SILD <- apply(twosh.SILD,1,mean)
+    av.twosh.ILD <- apply(twosh.ILD,1,mean)
 
     
-    ratios.twosh.SILD <- twosh.SILD$target/twosh.SILD$start
-    names(ratios.twosh.SILD) <- rownames(twosh.SILD)
-    ratios.twosh.SILD.sorted <- sort(ratios.twosh.SILD)
-    av.twosh.SILDsortedasratios <- av.twosh.SILD[names(ratios.twosh.SILD.sorted)]
+    ratios.twosh.ILD <- twosh.ILD$target/twosh.ILD$start
+    names(ratios.twosh.ILD) <- rownames(twosh.ILD)
+    reftarILDratios <- sort(ratios.twosh.ILD)
+    reftarMeanILDratios <- av.twosh.ILD[names(reftarILDratios)]
     
     ## compute R2
     if (!regression)
-        all.R2 <- as.vector(cor(allSILD, as.numeric(groups))^2)
+        all.R2 <- as.vector(cor(allILD, as.numeric(groups))^2)
     else {
-        R2lm <- (lm(allSILD~groups))
+        R2lm <- (lm(allILD~groups))
         tmplm <- summary(R2lm)
         all.R2 <- sapply(tmplm,function(x) x <- x$r.squared)
     }
-    names(all.R2) <- colnames(allSILD)
+    names(all.R2) <- colnames(allILD)
     
-    all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of SILDs compared to factor in total sample
-    av.twosh.SILDsorted <- av.twosh.SILD[names(all.R2sorted)]
+    all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of ILDs compared to factor in total sample
+    reftarMeanILD <- av.twosh.ILD[names(all.R2sorted)]
 
     ## combine all sample wide R2 stats in a named list
-    SILDstats <- list(av.twosh.SILDsorted=av.twosh.SILDsorted,ratios.twosh.SILD.sorted=ratios.twosh.SILD.sorted,av.twosh.SILDsortedasratios=av.twosh.SILDsortedasratios)
+    ILDstats <- list(reftarMeanILD=reftarMeanILD,reftarILDratios=reftarILDratios,reftarMeanILDratios=reftarMeanILDratios)
     
     largerR2 <- round(subset(all.R2sorted, all.R2sorted>stats::quantile(all.R2sorted, probs=R2tol)), digits=7)
-    ratios.twosh.SILD.ofBiggestR2 <- round(ratios.twosh.SILD[names(largerR2)], digits=7) # finds the corresponding SILDs ratios
-    largerR2.rankedByRatios <- 1+length(ratios.twosh.SILD.sorted)-rank(sort(round(abs(1-ratios.twosh.SILD.sorted), digits=7)), ties.method="random")[names(largerR2)]
-    outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allSILD), digits=0)
+    ratios.twosh.ILD.ofBiggestR2 <- round(ratios.twosh.ILD[names(largerR2)], digits=7) # finds the corresponding ILDs ratios
+    largerR2.rankedByRatios <- 1+length(reftarILDratios)-rank(sort(round(abs(1-reftarILDratios), digits=7)), ties.method="random")[names(largerR2)]
+    outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allILD), digits=0)
 
     ## create output table
-    o1 <- round(rbind(largerR2, ratios.twosh.SILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios),digits=2)
-    out <- list(largeR2=o1,allR2=all.R2sorted,reftarILDS=twosh.SILD,sampleILD=allSILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds,SILDstats=SILDstats)
+    o1 <- round(rbind(largerR2, ratios.twosh.ILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios),digits=2)
+    out <- list(relevantILDs=o1,allR2=all.R2sorted,reftarILDS=twosh.ILD,sampleILD=allILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds,ILDstats=ILDstats)
     ## extract names of relevant ILDS
     R2names <- colnames(o1)
 
@@ -219,7 +219,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
 
 #' @export
 print.ILDSR2 <- function(x,...) {
-    print(x$largeR2)
+    print(x$relevantILDs)
     cat("\n")
     if (x$bg.rounds > 0) {
         colorPVal(x$bg.test$p.value,rounds=x$bg.rounds)
@@ -242,7 +242,7 @@ bootstrapILDSR2 <- function(x,groups,rounds,R2tol,regression=FALSE) {
         x <- x[,,mysample]
         groups <- groups[mysample]
     }
-    out <- colnames(ILDSR2(x,groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol,silent=TRUE,bootstrap=TRUE)$largeR2)
+    out <- colnames(ILDSR2(x,groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol,silent=TRUE,bootstrap=TRUE)$relevantILDs)
     
     
 }
@@ -294,6 +294,7 @@ colorILDS <- function(x,rounds=NULL) {
 #' @param useconf logical: if TRUE, highlighting according to supported confidence of ILD is applied.
 #' @param add logical: if TRUE, plot is added to an existin one.
 #' @param plot.legend logical: if TRUE, a legend is added to the plots with information on the coloring scheme.
+#' @param ngrid integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.
 #' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
@@ -323,8 +324,7 @@ visualize <- function(x,...) UseMethod("visualize")
 #' @export
 #' @rdname visualize
 #' @method visualize ILDSR2
-visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,confcol=c("green","orange","red"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,...) {
-    
+visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,confcol=c("green","orange","red"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,ngrid=0,...) {
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -344,12 +344,13 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     } else
         mydeform <- deformGrid2d
     if (is.null(x$confR2) || ! useconf) {
-        highlight <- colnames(x$largeR2)
+        highlight <- colnames(x$relevantILDs)
         if (!is.null(highlight)) {
             hm <- match(highlight,rn)
             mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
             mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
             mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+           
             
             
         }
@@ -370,6 +371,8 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         }
         
     }
+    if (ngrid > 0)
+         mydeform(x$reference,x$target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
     if (D3) {
         rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
         if (!is.null(x$confR2) && useconf && plot.legend) {
@@ -406,14 +409,14 @@ visualise.ILDSR2 <- visualize.ILDSR2
 plot.ILDSR2 <- function(x,...) {
     par(mfrow=c(2,2))
 
-    plot(x$SILDstats$av.twosh.SILDsortedasratios, x$SILDstats$ratios.twosh.SILD.sorted, main="ILD Ratio Variabilty vs. ILDs Values", xlab="Average of Start & Target ILD", ylab="Target/Start ILD Ratio")
+    plot(x$ILDstats$reftarMeanILDratios, x$ILDstats$reftarILDratios, main="ILD Ratio Variabilty vs. ILDs Values", xlab="Average of Start & Target ILD", ylab="Target/Start ILD Ratio")
     abline(a=1, b=0, col="grey", lwd=3, lty=1) 
 
-    plot(x$SILDstats$av.twosh.SILDsorted,x$allR2, main="R2-Values vs. SILD Values", xlab="Average of Start & Target ILD", ylab="R2 for Sample SILDs vs Predictor")
+    plot(x$ILDstats$reftarMeanILD,x$allR2, main="R2-Values vs. ILD Values", xlab="Average of Start & Target ILD", ylab="R2 for Sample ILDs vs Predictor")
     abline(a=quantile(x$allR2, probs=x$R2tol), b=0, col="grey", lwd=3, lty=1)
 
-    hist(x$SILDstats$ratios.twosh.SILD.sorted, breaks=sqrt(length(x$SILDstats$ratios.twosh.SILD.sorted)), prob=TRUE, main="Disribution of Target/Start ILD ratios",xlab="Target/Start ILD Ratios")
-    lines(density(x$SILDstats$ratios.twosh.SILD.sorted), col="red")
+    hist(x$ILDstats$reftarILDratios, breaks=sqrt(length(x$ILDstats$reftarILDratios)), prob=TRUE, main="Disribution of Target/Start ILD ratios",xlab="Target/Start ILD Ratios")
+    lines(density(x$ILDstats$reftarILDratios), col="red")
 
     hist(x$allR2, breaks=sqrt(length(x$allR2)), prob=TRUE, main=" R2-Value Distribution",xlab="R2-Values")
     lines(density(x$allR2), col="red")

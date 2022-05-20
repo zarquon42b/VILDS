@@ -23,6 +23,7 @@ visualize(x, ...)
   useconf = TRUE,
   add = FALSE,
   plot.legend = FALSE,
+  ngrid = 0,
   ...
 )
 
@@ -42,6 +43,7 @@ visualise(x, ...)
   useconf = TRUE,
   add = FALSE,
   plot.legend = FALSE,
+  ngrid = 0,
   ...
 )
 }
@@ -73,6 +75,8 @@ visualise(x, ...)
 \item{add}{logical: if TRUE, plot is added to an existin one.}
 
 \item{plot.legend}{logical: if TRUE, a legend is added to the plots with information on the coloring scheme.}
+
+\item{ngrid}{integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.}
 }
 \description{
 Plot the ILDS with the relevant ILDS ighlighted

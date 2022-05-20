@@ -24,7 +24,7 @@ ILDSR2(
 
 \item{groups}{vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}}
 
-\item{R2tol}{numeric: upper percentile for SILD R2 in relation to factor}
+\item{R2tol}{numeric: upper percentile for ILD R2 in relation to factor}
 
 \item{bg.rounds}{numeric: number of permutation rounds to assess between group differences}
 
@@ -46,7 +46,7 @@ ILDSR2(
 }
 \value{
 A list containing:
-\item{largeR2}{containing landmark information with the highest R2 (Andrea please specify here)}
+\item{relevantILDs}{containing landmark information with the highest R2-values}
 \item{allR2}{vector with ILD specific R2-values, sorted decreasingly}
 \item{reftarILDS}{matrix with columns containing ILDs for reference and target shapes}
 \item{sampleILD}{matrix containing ILDs of entire sample}
