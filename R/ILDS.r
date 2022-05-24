@@ -289,7 +289,8 @@ colorILDS <- function(x,rounds=NULL) {
 #' @param cex numeric: size of plot content
 #' @param col define color of landmarks
 #' @param pch define symbols used to plot landmarks in 2D plot.
-#' @param confcol vector of colors associated with confidence. Must be of \code{length(contol)+1}.
+#' @param contractcol vector of colors for shortening ILDs, associated with confidence. Must be of \code{length(contol)}.
+#' @param expandcol vector of colors for expanding ILDs, associated with confidence. Must be of \code{length(contol)}.
 #' @param conftol vector: set thresholds for confidence coloring
 #' @param useconf logical: if TRUE, highlighting according to supported confidence of ILD is applied.
 #' @param add logical: if TRUE, plot is added to an existin one.
@@ -310,7 +311,7 @@ colorILDS <- function(x,rounds=NULL) {
 #' gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 #' sex <- factor(c(rep("f",30),rep("m",29)))
 #' procg <- procSym(gor.dat)
-#' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=99)
+#' ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=99,R2tol=.9)
 #' visualize(ildsg,cex=2,pch=19)
 #'
 #' ## use custom color and thresholds
@@ -324,7 +325,7 @@ visualize <- function(x,...) UseMethod("visualize")
 #' @export
 #' @rdname visualize
 #' @method visualize ILDSR2
-visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,confcol=c("green","orange","red"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,ngrid=0,...) {
+visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,contractcol=c("red","orange"),expandcol=c("blue","cyan"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,ngrid=0,...) {
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -348,28 +349,34 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         if (!is.null(highlight)) {
             hm <- match(highlight,rn)
             mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
-            mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
+            #mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
             mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
            
             
             
         }
     } else {
-        leg.txt <- c(conftol,conftol[length(conftol)])
-        leg.txt <- paste(c(rep(">",length(conftol)),"<"),leg.txt,"%")
+        leg.txt <- paste("Contraction - Conf. > ",conftol)
+        leg.txt <- c(leg.txt,paste("Expansion - Conf. > ",conftol))
+      #  leg.txt <- paste0(c(rep("> ",length(conftol)*2)),leg.txt,"% Conf.")
         highlight <- names(x$confR2)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
         hm <- match(highlight,rn)
-        mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
+        #mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
         myinterval <- getInterval(x$confR2,conftol)
-        for (i in 1:3) {
+        for (i in 1:(length(conftol))) {
             tmp <- which(myinterval == i)
             if (length(tmp)) {
                 hmtmp <- match(highlight[tmp],rn)
-                mydeform(ref0[hmtmp,,drop=FALSE],ref1[hmtmp,,drop=FALSE],add=T,lcol =confcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+                expand <- which(x$ILDstats$reftarILDratios[highlight[tmp]] > 1)
+                contract <- which(x$ILDstats$reftarILDratios[highlight[tmp]] <= 1)
+               
+                if (length(expand))
+                    mydeform(ref0[hmtmp[expand],,drop=FALSE],ref1[hmtmp[expand],,drop=FALSE],add=T,lcol = expandcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+                if(length(contract))
+                    mydeform(ref0[hmtmp[contract],,drop=FALSE],ref1[hmtmp[contract],,drop=FALSE],add=T,lcol = contractcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
             }
         }
-        
     }
     if (ngrid > 0)
          mydeform(x$reference,x$target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
@@ -378,14 +385,14 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         if (!is.null(x$confR2) && useconf && plot.legend) {
             if (interactive())
                answer <- readline("Please resize 3D window before legend is plotted and press any key")
-             rgl::legend3d("topleft",leg.txt,col=confcol,title = "Confidence",lty=1,lwd=3)
+             rgl::legend3d("topleft",leg.txt,col=c(contractcol,expandcol),title = "Confidence",lty=1,lwd=3)
          }
     }
     else {
         text(reference,adj=2,cex=cex,...)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
         if (!is.null(x$confR2) && useconf && plot.legend)
-            legend("topleft",leg.txt,col=confcol,title = "Confidence",lty=1,lwd=3)
+            legend("topleft",leg.txt,col=c(contractcol,expandcol),title = "Confidence",lty=1,lwd=3)
     }
 } 
 

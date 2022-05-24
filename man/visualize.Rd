@@ -18,7 +18,8 @@ visualize(x, ...)
   cex = 2,
   col = "red",
   pch = 19,
-  confcol = c("green", "orange", "red"),
+  contractcol = c("red", "orange"),
+  expandcol = c("blue", "cyan"),
   conftol = c(75, 50),
   useconf = TRUE,
   add = FALSE,
@@ -38,7 +39,8 @@ visualise(x, ...)
   cex = 2,
   col = "red",
   pch = 19,
-  confcol = c("green", "orange", "red"),
+  contractcol = c("red", "orange"),
+  expandcol = c("blue", "cyan"),
   conftol = c(75, 50),
   useconf = TRUE,
   add = FALSE,
@@ -66,7 +68,9 @@ visualise(x, ...)
 
 \item{pch}{define symbols used to plot landmarks in 2D plot.}
 
-\item{confcol}{vector of colors associated with confidence. Must be of \code{length(contol)+1}.}
+\item{contractcol}{vector of colors for shortening ILDs, associated with confidence. Must be of \code{length(contol)}.}
+
+\item{expandcol}{vector of colors for expanding ILDs, associated with confidence. Must be of \code{length(contol)}.}
 
 \item{conftol}{vector: set thresholds for confidence coloring}
 
@@ -95,7 +99,7 @@ require(shapes)
 gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 sex <- factor(c(rep("f",30),rep("m",29)))
 procg <- procSym(gor.dat)
-ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=99)
+ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=99,R2tol=.9)
 visualize(ildsg,cex=2,pch=19)
 
 ## use custom color and thresholds
