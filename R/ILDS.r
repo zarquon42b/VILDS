@@ -231,7 +231,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=
         out$confR2 <- confR2
         
         if (!silent)
-            colorILDS(confR2,wg.rounds)
+            colorILDS(confR2,wg.rounds,R2=all.R2)
     }     
 
     class(out) <- "ILDSR2"
@@ -251,8 +251,9 @@ print.ILDSR2 <- function(x,...) {
         colorPVal(x$bg.test$p.value,rounds=x$bg.rounds)
     } 
 
-    if (x$wg.rounds > 0)
-        colorILDS(x$confR2,x$wg.rounds)
+    if (x$wg.rounds > 0) {
+        colorILDS(x$confR2,x$wg.rounds,R2=x$allR2)
+    }
 }
 
 
@@ -287,19 +288,23 @@ colorPVal <- function(x,rounds=NULL,permu=TRUE) {
     
 }
 
-colorILDS <- function(x,rounds=NULL) {
+colorILDS <- function(x,rounds=NULL,R2=NULL) {
     cat(crayon::bold(paste0("Bootstrapped (",rounds," rounds) confidence of relevant ILDS:\n")))
     
     for (i in 1:length(x)) {
         cat(" ")
         itmp <- x[i]
+        itmp.name <- names(itmp)
+        itmpR2 <- NULL
+        if (!is.null(R2))
+            itmpR2 <- round(R2[itmp.name],digits=2)
         if (itmp > 75)
             colfun <- crayon::green
         else if (itmp > 50)
             colfun <-  crayon::yellow
         else
             colfun <-  crayon::red
-        cat(colfun(paste0(crayon::bold("ILDS",names(itmp)),": ",itmp,"% ")))
+        cat(colfun(paste0(crayon::bold("ILDS",names(itmp)),":\t",itmp,"%\tR2=",itmpR2)))
         cat("\n")
     }
 }
