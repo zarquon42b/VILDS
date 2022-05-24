@@ -153,13 +153,13 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     reftarMeanILDratios <- av.twosh.ILD[names(reftarILDratios)]
     
     ## compute R2
-    if (!regression)
-        all.R2 <- as.vector(cor(allILD, as.numeric(groups))^2)
-    else {
+   # if (!regression)
+  #      all.R2 <- as.vector(cor(allILD, as.numeric(groups))^2)
+  #  else {
         R2lm <- (lm(allILD~groups))
         tmplm <- summary(R2lm)
         all.R2 <- sapply(tmplm,function(x) x <- x$r.squared)
-    }
+ #   }
     names(all.R2) <- colnames(allILD)
     
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of ILDs compared to factor in total sample
@@ -168,7 +168,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
     ## combine all sample wide R2 stats in a named list
     ILDstats <- list(reftarMeanILD=reftarMeanILD,reftarILDratios=reftarILDratios,reftarMeanILDratios=reftarMeanILDratios)
     
-    largerR2 <- round(subset(all.R2sorted, all.R2sorted>stats::quantile(all.R2sorted, probs=R2tol)), digits=7)
+    largerR2 <- round(all.R2sorted[which(all.R2sorted > stats::quantile(all.R2sorted, probs=R2tol))], digits=7)
     ratios.twosh.ILD.ofBiggestR2 <- round(ratios.twosh.ILD[names(largerR2)], digits=7) # finds the corresponding ILDs ratios
     largerR2.rankedByRatios <- 1+length(reftarILDratios)-rank(sort(round(abs(1-reftarILDratios), digits=7)), ties.method="random")[names(largerR2)]
     outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allILD), digits=0)
@@ -188,16 +188,25 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         out$bg.test <- bg.test
     }
     if (regression && !bootstrap) {
-        pval <- anova(R2lm)$"Pr(>F)"[2]
+        pca <- prcompfast(x)
+        print(pca$sdev)
+        bad <- which(pca$sdev^2 < 1e-12)
+        if (length(bad))
+            pca <- pca$x[,-bad]
+        else
+            pca <- pca$x
+        
+        R2lmPCA <- (lm(pca~groups))
+        pval <- anova(R2lmPCA)$"Pr(>F)"[2]
         if (!silent)
-            colorPVal(format(pval,scientific=T,digits=3),permu=FALSE)
+            colorPVal(pval,permu=FALSE)
         out$bg.test <- pval
     }
 
     ## bootstrapping
     if (wg.rounds > 0) {
-        wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,rounds=wg.rounds,R2tol=R2tol,regression=regression),mc.cores = mc.cores)
-
+        wg.boot <- parallel::mclapply(1:wg.rounds,function(x) x <- bootstrapILDSR2(xorig,groups,R2tol=R2tol,regression=regression),mc.cores = mc.cores)
+        out$wg.boot <- wg.boot
         freqsR2 <- unlist(lapply(wg.boot,match,R2names))
         confR2 <- sapply(1:length(R2names),function(x) x <- length(which(freqsR2==x)))
         confR2 <- round((((confR2+1)/(wg.rounds+1))*100),digits=3)
@@ -230,19 +239,21 @@ print.ILDSR2 <- function(x,...) {
 }
 
 
-bootstrapILDSR2 <- function(x,groups,rounds,R2tol,regression=FALSE) {
+bootstrapILDSR2 <- function(x,groups,R2tol,regression=FALSE) {
+     xtmp <- x
     if (!regression) {
+       
         lev <- levels(groups)
         for (i in lev) {
             tmpgroup <- which(groups==i)
-            x[,,groups==i] <- x[,,sample(tmpgroup,size=length(tmpgroup),replace = TRUE)]
+            xtmp[,,groups==i] <- x[,,sample(tmpgroup,size=length(tmpgroup),replace = TRUE)]
         }
     } else {
         mysample <- sample(length(groups),replace=T,size=dim(x)[3]*2)
-        x <- x[,,mysample]
+        xtmp <- x[,,mysample]
         groups <- groups[mysample]
     }
-    out <- colnames(ILDSR2(x,groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol,silent=TRUE,bootstrap=TRUE)$relevantILDs)
+     out <- colnames(ILDSR2(xtmp,groups=groups,bg.rounds=0,wg.rounds=0,plot=FALSE,R2tol=R2tol,silent=TRUE,bootstrap=TRUE)$relevantILDs)
     
     
 }
@@ -252,9 +263,9 @@ colorPVal <- function(x,rounds=NULL,permu=TRUE) {
     else
         pvalcol <- crayon::red
     if (permu)
-        message(crayon::bold(paste0("P-value between groups (",rounds," rounds): ",pvalcol(x),"\n")))
+        message(crayon::bold(paste0("P-value between groups (",rounds," rounds): ",pvalcol(format(x,scientific=T,digits=3)),"\n")))
     else
-        message(crayon::bold(paste0("P-value of linear model shape ~ predictor: ",pvalcol(x),"\n")))
+        message(crayon::bold(paste0("P-value of linear model shape ~ predictor: ",pvalcol(format(x,scientific=T,digits=3)),"\n")))
 
     
 }
