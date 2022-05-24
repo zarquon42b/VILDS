@@ -8,6 +8,7 @@ ILDSR2(
   x,
   groups,
   R2tol = 0.95,
+  autocluster = FALSE,
   bg.rounds = 999,
   wg.rounds = 999,
   which = 1:2,
@@ -24,7 +25,9 @@ ILDSR2(
 
 \item{groups}{vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}}
 
-\item{R2tol}{numeric: upper percentile for ILD R2 in relation to factor}
+\item{R2tol}{numeric: upper percentile for ILD R2 in relation to factor or in case \code{autocluster=TRUE}, the minimum quantile allowed.}
+
+\item{autocluster}{logical: if TRUE, the function is trying to find a cluster with the highest R2-values. In this case \code{R2tol} is used as the quantile the cluster is allowed to occupy.}
 
 \item{bg.rounds}{numeric: number of permutation rounds to assess between group differences}
 
@@ -79,5 +82,5 @@ require(shapes)
 require(Morpho)
 gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 procg <- procSym(gor.dat)
-ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1)
+ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1,autocluster=FALSE)
 }

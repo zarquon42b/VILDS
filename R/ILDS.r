@@ -32,7 +32,8 @@ ILDS <- function(A) {
 #' Compute R2 for Interlandmark Distances explaining between group differences
 #' @param x array containing landmarks
 #' @param groups vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}
-#' @param R2tol numeric: upper percentile for ILD R2 in relation to factor
+#' @param R2tol numeric: upper percentile for ILD R2 in relation to factor or in case \code{autocluster=TRUE}, the minimum quantile allowed.
+#' @param autocluster logical: if TRUE, the function is trying to find a cluster with the highest R2-values. In this case \code{R2tol} is used as the quantile the cluster is allowed to occupy. 
 #' @param bg.rounds numeric: number of permutation rounds to assess between group differences
 #' @param wg.rounds numeric: number of rounds to assess noise within groups by bootstrapping.
 #' @param which integer (optional): in case the factor levels are > 2 this determins which factorlevels to use
@@ -76,11 +77,11 @@ ILDS <- function(A) {
 #' require(Morpho)
 #' gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 #' procg <- procSym(gor.dat)
-#' ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1)
+#' ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1,autocluster=FALSE)
 #' @importFrom Morpho permudist arrMean3
 #' @import graphics stats 
 #' @export 
-ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE,...) {
+ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=999,which=1:2,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE,...) {
     D <- dim(x)[2] ## get LM dimensionality
     ild <- ILDS(x)
     xorig <- x
@@ -161,6 +162,19 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         all.R2 <- sapply(tmplm,function(x) x <- x$r.squared)
  #   }
     names(all.R2) <- colnames(allILD)
+
+    if (autocluster && !bootstrap) {
+        R2tolOrig <- R2tol
+        if (!silent)
+            message("Autoclustering enabled. Trying to find cluster with highest R2-values")
+        nR2 <- findClusters(all.R2)
+        R2tol <- 1-nR2/length(all.R2)
+        if (R2tol < R2tolOrig)
+            stop("Autoclustering failed. Please provide R2tol manually!")
+        if (!silent)
+            message(paste0("R2tol set to: ",round(R2tol,digits=2)))
+        
+    }
     
     all.R2sorted <- sort(all.R2, decreasing=TRUE) # R2 of ILDs compared to factor in total sample
     reftarMeanILD <- av.twosh.ILD[names(all.R2sorted)]
@@ -188,8 +202,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         out$bg.test <- bg.test
     }
     if (regression && !bootstrap) {
-        pca <- prcompfast(x)
-        print(pca$sdev)
+        pca <- Morpho::prcompfast(x)
         bad <- which(pca$sdev^2 < 1e-12)
         if (length(bad))
             pca <- pca$x[,-bad]
@@ -200,7 +213,7 @@ ILDSR2 <- function(x,groups,R2tol=.95,bg.rounds=999,wg.rounds=999,which=1:2,refe
         pval <- anova(R2lmPCA)$"Pr(>F)"[2]
         if (!silent)
             colorPVal(pval,permu=FALSE)
-        out$bg.test <- pval
+        out$bg.test$p.value <- pval
     }
 
     ## bootstrapping
@@ -402,7 +415,7 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     else {
         text(reference,adj=2,cex=cex,...)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
-        if (!is.null(x$confR2) && useconf && plot.legend)
+        if (!is.null(x$confR2) && useconf )
             legend("topleft",leg.txt,col=c(contractcol,expandcol),title = "Confidence",lty=1,lwd=3)
     }
 } 
@@ -445,8 +458,24 @@ plot.ILDSR2 <- function(x,...) {
 getInterval <- function(x,intervals) {    
     tmp <- sapply(x,function(x) x > intervals)
     tmp <- rbind(tmp,TRUE)
-    chk <- apply(tmp,2,function(x) x <- which(x))
+    chk <- apply(tmp,2,function(x) x <- which(x),simplify = FALSE)
     chk <- sapply(chk,min)
     return(chk)
+    
+}
+
+#' @import mclust
+findClusters <- function(x) {
+    myclust <- mclust::Mclust(x,G=1:20,verbose = FALSE)
+    m.best <- dim(myclust$z)[2]
+
+    hc <- hclust(dist(x),method="ward.D2")
+    tree <- cutree(hc,k=m.best)
+    clustermeans <- sapply(min(tree):max(tree),function(y) y <- mean(x[tree=y]))
+    bestC <- which.max(clustermeans)
+    nbest <- length(which(tree == bestC))
+    return(nbest)
+                    
+    
     
 }

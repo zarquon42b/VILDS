@@ -12,6 +12,7 @@ Imports: Morpho,
     crayon,
     parallel,
     stats,
+    mclust,
     rgl
 Suggests:
     shapes
