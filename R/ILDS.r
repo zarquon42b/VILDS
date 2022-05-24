@@ -169,10 +169,14 @@ ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=
             message("Autoclustering enabled. Trying to find cluster with highest R2-values")
         nR2 <- findClusters(all.R2)
         R2tol <- 1-nR2/length(all.R2)
-        if (R2tol < R2tolOrig)
-            stop("Autoclustering failed. Please provide R2tol manually!")
-        if (!silent)
-            message(paste0("R2tol set to: ",round(R2tol,digits=2)))
+        if (R2tol < R2tolOrig) {
+            R2tol <- R2tolOrig
+            warning(paste("Autoclustering failed. Using provided R2tol value:",R2tol))
+            
+        } else {
+            if (!silent)
+                message(paste0("R2tol set to: ",round(R2tol,digits=2)))
+        }
         
     }
     
