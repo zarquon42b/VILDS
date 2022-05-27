@@ -195,7 +195,7 @@ ILDSR2 <- function(x,groups,R2tol=.9,autocluster=TRUE,gap=TRUE,bg.rounds=999,wg.
     ILDstats <- list(reftarMeanILD=reftarMeanILD,reftarILDratios=reftarILDratios,reftarMeanILDratios=reftarMeanILDratios)
     
     ILDsR2 <- round(all.R2sorted[which(all.R2sorted > stats::quantile(all.R2sorted, probs=R2tol))], digits=7)
-    ratios.twosh.ILD.ofBiggestR2 <- round(ratios.twosh.ILD[names(ILDsR2)], digits=7) # finds the corresponding ILDs ratios
+    ILDsRatios <- round(ratios.twosh.ILD[names(ILDsR2)], digits=7) # finds the corresponding ILDs ratios
     ILDsRatiosAbsRank <- 1+length(reftarILDratios)-rank(sort(round(abs(1-reftarILDratios), digits=7)), ties.method="random")[names(ILDsR2)]
     outOf100.ILDsRatiosAbsRank <- round(ILDsRatiosAbsRank*100/ncol(allILD), digits=0)
 
