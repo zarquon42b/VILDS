@@ -7,8 +7,9 @@
 ILDSR2(
   x,
   groups,
-  R2tol = 0.95,
-  autocluster = FALSE,
+  R2tol = 0.9,
+  autocluster = TRUE,
+  gap = TRUE,
   bg.rounds = 999,
   wg.rounds = 999,
   which = 1:2,
@@ -28,6 +29,8 @@ ILDSR2(
 \item{R2tol}{numeric: upper percentile for ILD R2 in relation to factor or in case \code{autocluster=TRUE}, the minimum quantile allowed.}
 
 \item{autocluster}{logical: if TRUE, the function is trying to find a cluster with the highest R2-values. In this case \code{R2tol} is used as the quantile the cluster is allowed to occupy.}
+
+\item{gap}{logical: if TRUE, the largest gap in the R2 distribution is sought. If FALSE, a clustering procedure is used.}
 
 \item{bg.rounds}{numeric: number of permutation rounds to assess between group differences}
 
@@ -82,5 +85,5 @@ require(shapes)
 require(Morpho)
 gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 procg <- procSym(gor.dat)
-ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1,autocluster=FALSE)
+ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1,autocluster=TRUE,R2tol=.8)
 }

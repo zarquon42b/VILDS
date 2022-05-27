@@ -33,7 +33,8 @@ ILDS <- function(A) {
 #' @param x array containing landmarks
 #' @param groups vector containing group assignments or a numeric covariate. For groups with more than two levels, a pair of needs to be specified using \code{which}
 #' @param R2tol numeric: upper percentile for ILD R2 in relation to factor or in case \code{autocluster=TRUE}, the minimum quantile allowed.
-#' @param autocluster logical: if TRUE, the function is trying to find a cluster with the highest R2-values. In this case \code{R2tol} is used as the quantile the cluster is allowed to occupy. 
+#' @param autocluster logical: if TRUE, the function is trying to find a cluster with the highest R2-values. In this case \code{R2tol} is used as the quantile the cluster is allowed to occupy.
+#' @param gap logical: if TRUE, the largest gap in the R2 distribution is sought. If FALSE, a clustering procedure is used.
 #' @param bg.rounds numeric: number of permutation rounds to assess between group differences
 #' @param wg.rounds numeric: number of rounds to assess noise within groups by bootstrapping.
 #' @param which integer (optional): in case the factor levels are > 2 this determins which factorlevels to use
@@ -77,18 +78,14 @@ ILDS <- function(A) {
 #' require(Morpho)
 #' gor.dat <- bindArr(gorf.dat,gorm.dat,along=3)
 #' procg <- procSym(gor.dat)
-#' ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1,autocluster=FALSE)
+#' ildsg <- ILDSR2(procg$rotated,procg$size,plot=FALSE,bg.rounds=999,wg.rounds=99,mc.cores=1,autocluster=TRUE,R2tol=.8)
 #' @importFrom Morpho permudist arrMean3
 #' @import graphics stats 
 #' @export 
-ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=999,which=1:2,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE,...) {
+ILDSR2 <- function(x,groups,R2tol=.9,autocluster=TRUE,gap=TRUE,bg.rounds=999,wg.rounds=999,which=1:2,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE,...) {
     D <- dim(x)[2] ## get LM dimensionality
-    ild <- ILDS(x)
-    xorig <- x
-    allILD <- round(ild, digits=6)
-    mindim <- ncol(allILD)
-    if (length(dim(x)) == 3)
-        x <- vecx(x,byrow = T)
+    
+    
     bootstrap <- FALSE
     args <- list(...)
     if ("bootstrap" %in% names(args)) {
@@ -114,25 +111,29 @@ ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=
         if (!is.null(which)) {
             groups <- factor(groups[groups %in% lev[which]])
             lev <- levels(groups)
-            x <- x[which(old_groups %in% lev),]
+            x <- x[,,which(old_groups %in% lev)]
+          
         }
         ng <- length(lev)
 
         if (ng < 2)
             stop("provide at least two groups")
-        if (length(groups) != nrow(x))
+        if (length(groups) != dim(x)[3])
             warning("group affinity and sample size not corresponding!")
 
         ## create reference and target
         if (is.null(reference))
-            reference <- arrMean3(xorig[,,groups==lev[1]])
+            reference <- arrMean3(x[,,groups==lev[1]])
         
         if (is.null(target))
-            target <- arrMean3(xorig[,,groups==lev[2]])
+            target <- arrMean3(x[,,groups==lev[2]])
 
         twosh <- bindArr(reference,target,along=3)
-        
+        xorig <- x
+        x <- vecx(x,byrow = T)
     } else { ## regression case
+        xorig <- x
+        x <- vecx(x,byrow = T)
         lmod <- lm(x~groups)
         estquant <- quantile(groups,probs=c(.1,.9))
         tarref <- predict(lmod,newdata=list(groups=estquant))
@@ -140,6 +141,10 @@ ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=
         reference <- twosh[,,1]
         target <- twosh[,,2]
     }
+    
+    ild <- ILDS(xorig)
+    allILD <- round(ild, digits=6)
+    mindim <- ncol(allILD)
     
     E <- ILDS(twosh)
     twosh.ILD <- round(as.data.frame(t(E)), digits=6)
@@ -167,7 +172,10 @@ ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=
         R2tolOrig <- R2tol
         if (!silent)
             message("Autoclustering enabled. Trying to find cluster with highest R2-values")
-        nR2 <- findClusters(all.R2)
+        if (gap)
+            nR2 <- findGap(all.R2)
+        else
+            nR2 <- findClusters(all.R2)
         R2tol <- 1-nR2/length(all.R2)
         if (R2tol < R2tolOrig) {
             R2tol <- R2tolOrig
@@ -186,13 +194,13 @@ ILDSR2 <- function(x,groups,R2tol=.95,autocluster=FALSE,bg.rounds=999,wg.rounds=
     ## combine all sample wide R2 stats in a named list
     ILDstats <- list(reftarMeanILD=reftarMeanILD,reftarILDratios=reftarILDratios,reftarMeanILDratios=reftarMeanILDratios)
     
-    largerR2 <- round(all.R2sorted[which(all.R2sorted > stats::quantile(all.R2sorted, probs=R2tol))], digits=7)
-    ratios.twosh.ILD.ofBiggestR2 <- round(ratios.twosh.ILD[names(largerR2)], digits=7) # finds the corresponding ILDs ratios
-    largerR2.rankedByRatios <- 1+length(reftarILDratios)-rank(sort(round(abs(1-reftarILDratios), digits=7)), ties.method="random")[names(largerR2)]
-    outOf100.largerR2.rankedByRatios <- round(largerR2.rankedByRatios*100/ncol(allILD), digits=0)
+    ILDsR2 <- round(all.R2sorted[which(all.R2sorted > stats::quantile(all.R2sorted, probs=R2tol))], digits=7)
+    ratios.twosh.ILD.ofBiggestR2 <- round(ratios.twosh.ILD[names(ILDsR2)], digits=7) # finds the corresponding ILDs ratios
+    ILDsRatiosAbsRank <- 1+length(reftarILDratios)-rank(sort(round(abs(1-reftarILDratios), digits=7)), ties.method="random")[names(ILDsR2)]
+    outOf100.ILDsRatiosAbsRank <- round(ILDsRatiosAbsRank*100/ncol(allILD), digits=0)
 
     ## create output table
-    o1 <- round(rbind(largerR2, ratios.twosh.ILD.ofBiggestR2, largerR2.rankedByRatios, outOf100.largerR2.rankedByRatios),digits=2)
+    o1 <- round(rbind(ILDsR2, ILDsRatios, ILDsRatiosAbsRank, outOf100.ILDsRatiosAbsRank),digits=2)
     out <- list(relevantILDs=o1,allR2=all.R2sorted,reftarILDS=twosh.ILD,sampleILD=allILD,R2tol=R2tol,reference=reference,target=target,bg.rounds=bg.rounds,wg.rounds=wg.rounds,ILDstats=ILDstats)
     ## extract names of relevant ILDS
     R2names <- colnames(o1)
@@ -475,7 +483,8 @@ getInterval <- function(x,intervals) {
 
 #' @import mclust
 findClusters <- function(x) {
-    myclust <- mclust::Mclust(x,G=1:20,verbose = FALSE)
+    hc0 <- mclust::hc(x,c("E","V"))
+    myclust <- mclust::Mclust(x,G=1:10,verbose = FALSE,modelNames = c("E","V"),initialization = list(hcPairs=hc0))
     m.best <- dim(myclust$z)[2]
 
     hc <- hclust(dist(x),method="ward.D2")
@@ -486,5 +495,15 @@ findClusters <- function(x) {
     return(nbest)
                     
     
+    
+}
+
+findGap <- function(x) {
+    nl <- length(x)
+    xsort <- sort(x,decreasing=T)
+    xdiff <- xsort[1:(nl-1)]-xsort[2:nl]
+    lgap <- which.max(xdiff)
+    nbest <- length(which(xsort >= xsort[lgap]))
+    return(nbest)
     
 }
