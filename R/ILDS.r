@@ -344,7 +344,7 @@ colorILDS <- function(x,rounds=NULL,R2=NULL) {
 #' data(boneData)
 #' proc <- procSym(boneLM)
 #' groups <- name2factor(boneLM,which=3)
-#' ilds <- ILDSR2(proc$rotated,groups,plot=FALSE,bg.rounds=0,wg.rounds=0)
+#' ilds <- ILDSR2(proc$rotated,groups,plot=FALSE,bg.rounds=0,wg.rounds=99)
 #' visualize(ilds)
 #'
 #' ## 2D Example
@@ -392,7 +392,7 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
             mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
             #mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
             mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
-           
+            mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,alpha=.5,...)
             
             
         }
@@ -403,6 +403,9 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         highlight <- names(x$confR2)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
         hm <- match(highlight,rn)
+        if (!D3)
+             mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,...)
+       
         #mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
         myinterval <- getInterval(x$confR2,conftol)
         for (i in 1:(length(conftol))) {
@@ -411,17 +414,19 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
                 hmtmp <- match(highlight[tmp],rn)
                 expand <- which(x$ILDstats$reftarILDratios[highlight[tmp]] > 1)
                 contract <- which(x$ILDstats$reftarILDratios[highlight[tmp]] <= 1)
-               
                 if (length(expand))
                     mydeform(ref0[hmtmp[expand],,drop=FALSE],ref1[hmtmp[expand],,drop=FALSE],add=T,lcol = expandcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
                 if(length(contract))
                     mydeform(ref0[hmtmp[contract],,drop=FALSE],ref1[hmtmp[contract],,drop=FALSE],add=T,lcol = contractcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+                
             }
         }
     }
     if (ngrid > 0)
-         mydeform(x$reference,x$target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
+        mydeform(x$reference,x$target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
+
     if (D3) {
+        mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,alpha=.5,...)
         rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
         if (!is.null(x$confR2) && useconf && plot.legend) {
             if (interactive())
@@ -430,10 +435,13 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
          }
     }
     else {
-        text(reference,adj=2,cex=cex,...)
+        
+       
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
+        text(reference,adj=1,offset=1,cex=cex,...)
+        ## ranges <- diff(range(reference[,1]))
         if (!is.null(x$confR2) && useconf )
-            legend("topleft",leg.txt,col=c(contractcol,expandcol),title = "Confidence",lty=1,lwd=3)
+            legend("topleft",bg="transparent",leg.txt,col=c(contractcol,expandcol),title = "Confidence",lty=1,lwd=3)
     }
 } 
 
