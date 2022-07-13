@@ -337,6 +337,7 @@ colorILDS <- function(x,rounds=NULL,R2=NULL) {
 #' @param add logical: if TRUE, plot is added to an existin one.
 #' @param plot.legend logical: if TRUE, a legend is added to the plots with information on the coloring scheme.
 #' @param ngrid integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.
+#' @param links integer vector: add information on how landmarks are linked (aka wireframe)
 #' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
@@ -366,7 +367,7 @@ visualize <- function(x,...) UseMethod("visualize")
 #' @export
 #' @rdname visualize
 #' @method visualize ILDSR2
-visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,contractcol=c("red","orange"),expandcol=c("blue","cyan"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,ngrid=0,...) {
+visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,contractcol=c("red","orange"),expandcol=c("blue","cyan"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,ngrid=0,links=NULL,...) {
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -403,9 +404,12 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         highlight <- names(x$confR2)
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
         hm <- match(highlight,rn)
-        if (!D3)
-             mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,...)
-       
+        if (!D3 && is.null(links)) {
+            mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,...)
+           
+        }
+        if (!is.null(links))
+                lineplot(reference,point=links,lwd=lwd,add=TRUE,col="grey75")
         #mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
         myinterval <- getInterval(x$confR2,conftol)
         for (i in 1:(length(conftol))) {
@@ -425,7 +429,7 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     if (ngrid > 0)
         mydeform(x$reference,x$target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
 
-    if (D3) {
+    if (D3 && is.null(links)) {
         mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,alpha=.5,...)
         rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
         if (!is.null(x$confR2) && useconf && plot.legend) {
@@ -436,7 +440,7 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     }
     else {
         
-       
+        
         mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
         text(reference,adj=1,offset=1,cex=cex,...)
         ## ranges <- diff(range(reference[,1]))

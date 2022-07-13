@@ -25,6 +25,7 @@ visualize(x, ...)
   add = FALSE,
   plot.legend = FALSE,
   ngrid = 0,
+  links = NULL,
   ...
 )
 
@@ -46,6 +47,7 @@ visualise(x, ...)
   add = FALSE,
   plot.legend = FALSE,
   ngrid = 0,
+  links = NULL,
   ...
 )
 }
@@ -81,6 +83,8 @@ visualise(x, ...)
 \item{plot.legend}{logical: if TRUE, a legend is added to the plots with information on the coloring scheme.}
 
 \item{ngrid}{integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.}
+
+\item{links}{integer vector: add information on how landmarks are linked (aka wireframe)}
 }
 \description{
 Plot the ILDS with the relevant ILDS ighlighted
@@ -91,7 +95,7 @@ require(Morpho)
 data(boneData)
 proc <- procSym(boneLM)
 groups <- name2factor(boneLM,which=3)
-ilds <- ILDSR2(proc$rotated,groups,plot=FALSE,bg.rounds=0,wg.rounds=0)
+ilds <- ILDSR2(proc$rotated,groups,plot=FALSE,bg.rounds=0,wg.rounds=99)
 visualize(ilds)
 
 ## 2D Example
