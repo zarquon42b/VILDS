@@ -337,7 +337,7 @@ colorILDS <- function(x,rounds=NULL,R2=NULL) {
 #' @param add logical: if TRUE, plot is added to an existin one.
 #' @param plot.legend logical: if TRUE, a legend is added to the plots with information on the coloring scheme.
 #' @param ngrid integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.
-#' @param links integer vector: add information on how landmarks are linked (aka wireframe)
+#' @param links integer vector or list containing multiple integer vectors or a k x 2 integer matrix where each row defines a single link: add information on how landmarks are linked (aka wireframe)
 #' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
@@ -372,6 +372,10 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
     rn <- rownames(reftarILDS)
+    if (!is.null(links)) {
+        if (is.matrix(links))
+            links <- lapply(1:nrow(links),function(x) x <- links[x,])
+    }
     pairing <- (matrix(as.integer(unlist(strsplit(rn,split = "-"))),length(rn),2,byrow=T))
     if (ref)
         reference <- x$reference

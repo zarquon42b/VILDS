@@ -84,7 +84,7 @@ visualise(x, ...)
 
 \item{ngrid}{integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.}
 
-\item{links}{integer vector: add information on how landmarks are linked (aka wireframe)}
+\item{links}{integer vector or list containing multiple integer vectors or a k x 2 integer matrix where each row defines a single link: add information on how landmarks are linked (aka wireframe)}
 }
 \description{
 Plot the ILDS with the relevant ILDS ighlighted
