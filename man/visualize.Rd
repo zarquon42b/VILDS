@@ -60,7 +60,7 @@ visualise(x, ...)
 
 \item{...}{additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.}
 
-\item{ref}{logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used.}
+\item{ref}{logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used. If \code{ref=FALSE}, the contraction and exxpansion will also be inverted}
 
 \item{relcol}{color of relevant ILDs}
 

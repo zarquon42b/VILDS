@@ -323,7 +323,7 @@ colorILDS <- function(x,rounds=NULL,R2=NULL) {
 #'
 #' Plot the ILDS with the relevant ILDS ighlighted
 #' @param x output of function \code{\link{ILDSR2}}
-#' @param ref logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used.
+#' @param ref logical: if TRUE, the reference shape defined in  \code{\link{ILDSR2}} will be plotted. Otherwise the target is used. If \code{ref=FALSE}, the contraction and exxpansion will also be inverted
 #' @param relcol color of relevant ILDs
 #' @param rescol color of "irrelevant" ILDs
 #' @param lwd numeric: define line width. Relevant ILDs are displayed by \code{3*lwd}.
@@ -385,6 +385,7 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     } else {
         reference <- x$target
         target <- x$reference
+        x$ILDstats$reftarILDratios <- 1/x$ILDstats$reftarILDratios
     }
     if (magnify != 1) {
         mymean <- (reference+target)/2
