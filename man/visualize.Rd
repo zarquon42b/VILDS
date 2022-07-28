@@ -26,6 +26,8 @@ visualize(x, ...)
   plot.legend = FALSE,
   ngrid = 0,
   links = NULL,
+  lollipop = FALSE,
+  magnify = 1,
   ...
 )
 
@@ -48,6 +50,8 @@ visualise(x, ...)
   plot.legend = FALSE,
   ngrid = 0,
   links = NULL,
+  lollipop = FALSE,
+  magnify = 1,
   ...
 )
 }
@@ -85,6 +89,10 @@ visualise(x, ...)
 \item{ngrid}{integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.}
 
 \item{links}{integer vector or list containing multiple integer vectors or a k x 2 integer matrix where each row defines a single link: add information on how landmarks are linked (aka wireframe)}
+
+\item{lollipop}{logical: if TRUE, landmark displacement between reference and target is displayed as lollipop graph.}
+
+\item{magnify}{numeric: symmetrically increase differences between reference and target by that factor}
 }
 \description{
 Plot the ILDS with the relevant ILDS ighlighted

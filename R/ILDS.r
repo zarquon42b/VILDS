@@ -338,6 +338,8 @@ colorILDS <- function(x,rounds=NULL,R2=NULL) {
 #' @param plot.legend logical: if TRUE, a legend is added to the plots with information on the coloring scheme.
 #' @param ngrid integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.
 #' @param links integer vector or list containing multiple integer vectors or a k x 2 integer matrix where each row defines a single link: add information on how landmarks are linked (aka wireframe)
+#' @param magnify numeric: symmetrically increase differences between reference and target by that factor
+#' @param lollipop logical: if TRUE, landmark displacement between reference and target is displayed as lollipop graph.
 #' @param ... additional parameters passed to  \code{\link{deformGrid2d}} /  \code{\link{deformGrid3d}}.
 #' @examples
 #' ## 3D Example
@@ -367,7 +369,7 @@ visualize <- function(x,...) UseMethod("visualize")
 #' @export
 #' @rdname visualize
 #' @method visualize ILDSR2
-visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,contractcol=c("red","orange"),expandcol=c("blue","cyan"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,ngrid=0,links=NULL,...) {
+visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,col="red",pch=19,contractcol=c("red","orange"),expandcol=c("blue","cyan"),conftol=c(75,50),useconf=TRUE,add=FALSE,plot.legend=FALSE,ngrid=0,links=NULL,lollipop=FALSE, magnify=1,...) {
     if (!inherits(x, "ILDSR2")) 
         stop("please provide object of class 'ILDSR2'")
     reftarILDS <- x$reftarILDS
@@ -377,11 +379,19 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
             links <- lapply(1:nrow(links),function(x) x <- links[x,])
     }
     pairing <- (matrix(as.integer(unlist(strsplit(rn,split = "-"))),length(rn),2,byrow=T))
-    if (ref)
+    if (ref) {
         reference <- x$reference
-    else
+        target <- x$target
+    } else {
         reference <- x$target
-    
+        target <- x$reference
+    }
+    if (magnify != 1) {
+        mymean <- (reference+target)/2
+        mydiff <- reference-mymean
+        reference <- magnify*mydiff+mymean
+        target <- -magnify*mydiff+mymean
+    }
     ref0 <- reference[pairing[,1],]
     ref1 <- reference[pairing[,2],]
     D3 <- FALSE
@@ -413,7 +423,8 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
            
         }
         if (!is.null(links))
-                lineplot(reference,point=links,lwd=lwd,add=TRUE,col="grey75")
+            lineplot(reference,point=links,lwd=lwd,add=TRUE,col="grey75")
+       
         #mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
         myinterval <- getInterval(x$confR2,conftol)
         for (i in 1:(length(conftol))) {
@@ -431,14 +442,16 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         }
     }
     if (ngrid > 0)
-        mydeform(x$reference,x$target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
+        mydeform(reference,target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
 
     if (D3) {
          if(is.null(links))
              mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,alpha=.5,...)
-
+          if (lollipop)
+              mydeform(reference,target,lines=T,lwd=lwd,show=1,cex2=0,cex1=0,add=TRUE,ngrid=0,...)
          rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
-        if (!is.null(x$confR2) && useconf && plot.legend) {
+         
+         if (!is.null(x$confR2) && useconf && plot.legend) {
             if (interactive())
                answer <- readline("Please resize 3D window before legend is plotted and press any key")
              rgl::legend3d("topleft",leg.txt,col=c(contractcol,expandcol),title = "Confidence",lty=1,lwd=3)
@@ -446,8 +459,11 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     }
     else {
         
-        
-        mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
+        if (!lollipop)
+            mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
+        else
+            mydeform(reference,target,lines=T,lwd=lwd,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,lty=1,...)
+
         text(reference,adj=1,offset=1,cex=cex,...)
         ## ranges <- diff(range(reference[,1]))
         if (!is.null(x$confR2) && useconf )
