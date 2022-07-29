@@ -359,7 +359,7 @@ colorILDS <- function(x,rounds=NULL,R2=NULL) {
 #' visualize(ildsg,cex=2,pch=19)
 #'
 #' ## use custom color and thresholds
-#' visualize(ildsg,cex=2,pch=19,confcol=rainbow(5),conftol=c(0.9,0.6,0.4))
+#' visualize(ildsg,cex=2,pch=19,confcol=rainbow(5),contractcol=c(0.9,0.6,0.4))
 #' @importFrom Morpho deformGrid2d deformGrid3d
 #' @importFrom rgl text3d
 #' @rdname visualize
@@ -397,6 +397,12 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     }
     ref0 <- reference[pairing[,1],]
     ref1 <- reference[pairing[,2],]
+    tar0 <- target[pairing[,1],]
+    tar1 <- target[pairing[,2],]
+    if (!lollipop) {
+        tar0 <- ref0
+        tar1 <- ref1
+    }
     D3 <- FALSE
     if (ncol(reference)==3) {
         D3 <- TRUE
@@ -409,11 +415,11 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
             hm <- match(highlight,rn)
             mydeform(reference,target,lines=lollipop,lwd=0,show=1:2,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
             #mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
-            mydeform(ref0[hm,,drop=FALSE],ref1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+            mydeform(tar0[hm,,drop=FALSE],tar1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
             if (D3)
-                mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,alpha=.5,...)
+                mydeform(tar0[-hm,,drop=FALSE],tar1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,alpha=.5,...)
             else
-               mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,...) 
+               mydeform(tar0[-hm,,drop=FALSE],tar1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,...) 
             
             
         }
@@ -440,9 +446,9 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
                 expand <- which(x$ILDstats$reftarILDratios[highlight[tmp]] > 1)
                 contract <- which(x$ILDstats$reftarILDratios[highlight[tmp]] <= 1)
                 if (length(expand))
-                    mydeform(ref0[hmtmp[expand],,drop=FALSE],ref1[hmtmp[expand],,drop=FALSE],add=T,lcol = expandcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+                    mydeform(tar0[hmtmp[expand],,drop=FALSE],tar1[hmtmp[expand],,drop=FALSE],add=T,lcol = expandcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
                 if(length(contract))
-                    mydeform(ref0[hmtmp[contract],,drop=FALSE],ref1[hmtmp[contract],,drop=FALSE],add=T,lcol = contractcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
+                    mydeform(tar0[hmtmp[contract],,drop=FALSE],tar1[hmtmp[contract],,drop=FALSE],add=T,lcol = contractcol[i] ,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
                 
             }
         }
@@ -467,9 +473,8 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         
         if (!lollipop)
             mydeform(reference,reference,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,...)
-        
-
-        mydeform(reference,target,lines=T,lwd=lwd,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,lty=1,...)
+        else
+            mydeform(reference,target,lines=T,lwd=lwd*2,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=T,lty=1,...)
 
         text(reference,adj=1,offset=1,cex=cex,...)
         ## ranges <- diff(range(reference[,1]))
