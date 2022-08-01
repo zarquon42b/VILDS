@@ -413,13 +413,13 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         highlight <- colnames(x$relevantILDs)
         if (!is.null(highlight)) {
             hm <- match(highlight,rn)
-            mydeform(reference,target,lines=FALSE,lwd=0,show=1:2,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
+            mydeform(reference,target,lines=FALSE,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
             #mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
             mydeform(tar0[hm,,drop=FALSE],tar1[hm,,drop=FALSE],add=T,lcol = relcol,lwd=lwd*3,show=1,cex2=0,cex1=0,lty=1,...)
-            if (D3)
-                mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,alpha=.5,...)
-            else
-               mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,...) 
+            ## if (D3)
+            ##    mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,alpha=.5,...)
+            ## else
+            ##    mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75",lwd=lwd,show=1,cex2=0,cex1=0,...) 
             
             
         }
@@ -428,14 +428,12 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
         leg.txt <- c(leg.txt,paste("Expansion - Conf. > ",conftol))
       #  leg.txt <- paste0(c(rep("> ",length(conftol)*2)),leg.txt,"% Conf.")
         highlight <- names(x$confR2)
-        mydeform(reference,target,lines=F,lwd=0,show=1:2,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
+        mydeform(reference,target,lines=F,lwd=0,show=1,cex2=0,cex1=cex,col1=col,pch=pch,add=add,...)
         hm <- match(highlight,rn)
-        if (!D3 && is.null(links)) {
-            mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,...)
-           
-        }
-        if (!is.null(links))
-            lineplot(reference,point=links,lwd=lwd,add=TRUE,col="grey75")
+        ## if (!D3 && is.null(links)) {
+        ##    mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,...)
+        ## }
+       
        
         #mydeform(ref0[-hm,],ref1[-hm,],add=T,lcol = rescol,lwd=lwd,show=1,cex2=0,cex1=0,...)
         myinterval <- getInterval(x$confR2,conftol)
@@ -455,12 +453,19 @@ visualize.ILDSR2 <- function(x,ref=TRUE,relcol="red",rescol="black",lwd=1,cex=2,
     }
     if (ngrid > 0)
         mydeform(reference,target,lines=F,lwd=0,show=1,cex2=0,cex1=0,add=TRUE,ngrid=ngrid,...)
+
+     if (!is.null(links)) {
+            if (lollipop)
+                lineplot(target,point=links,lwd=lwd,add=TRUE,col="grey75")
+            else
+                lineplot(reference,point=links,lwd=lwd,add=TRUE,col="grey75")
+        }
     
     if (D3) {
-         if(is.null(links))
-             mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,alpha=.5,...)
+        ## if(is.null(links))
+        ##     mydeform(ref0[-hm,,drop=FALSE],ref1[-hm,,drop=FALSE],add=T,lcol = "grey75" ,lwd=lwd,show=1,cex2=0,cex1=0,lty=1,alpha=.5,...)
           if (lollipop)
-              mydeform(reference,target,lines=T,lwd=lwd,show=1,cex2=0,cex1=0,add=TRUE,ngrid=0,...)
+              mydeform(reference,target,lines=T,lwd=lwd*2,show=1,cex2=0,cex1=0,add=TRUE,ngrid=0,...)
          rgl::texts3d(reference,texts = 1:nrow(reference),adj=1.5,...)
          
          if (!is.null(x$confR2) && useconf && plot.legend) {
