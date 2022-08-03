@@ -25,8 +25,12 @@ visualize(x, ...)
   add = FALSE,
   plot.legend = FALSE,
   ngrid = 0,
+  gridcol = "grey90",
+  gridlty = 3,
   links = NULL,
-  lollipop = FALSE,
+  linkcol = "grey50",
+  lollipop = TRUE,
+  lollipopcol = "black",
   magnify = 1,
   ...
 )
@@ -49,8 +53,12 @@ visualise(x, ...)
   add = FALSE,
   plot.legend = FALSE,
   ngrid = 0,
+  gridcol = "grey90",
+  gridlty = 3,
   links = NULL,
-  lollipop = FALSE,
+  linkcol = "grey50",
+  lollipop = TRUE,
+  lollipopcol = "black",
   magnify = 1,
   ...
 )
@@ -88,9 +96,17 @@ visualise(x, ...)
 
 \item{ngrid}{integer: if \code{ngrid > 0}, a TPS grid is shown to display the spatial deformation from reference to target shape.}
 
+\item{gridcol}{color of TPS grid}
+
+\item{gridlty}{line type for TPS grid}
+
 \item{links}{integer vector or list containing multiple integer vectors or a k x 2 integer matrix where each row defines a single link: add information on how landmarks are linked (aka wireframe)}
 
+\item{linkcol}{color of wireframe defined by \code{links}}
+
 \item{lollipop}{logical: if TRUE, landmark displacement between reference and target is displayed as lollipop graph.}
+
+\item{lollipopcol}{color for lollipop handles}
 
 \item{magnify}{numeric: symmetrically increase differences between reference and target by that factor}
 }
@@ -115,5 +131,5 @@ ildsg <- ILDSR2(procg$rotated,sex,plot=FALSE,bg.rounds=0,wg.rounds=99,R2tol=.9)
 visualize(ildsg,cex=2,pch=19)
 
 ## use custom color and thresholds
-visualize(ildsg,cex=2,pch=19,confcol=rainbow(5),conftol=c(0.9,0.6,0.4))
+visualize(ildsg,cex=2,pch=19,confcol=rainbow(5),contractcol=c(0.9,0.6,0.4))
 }
