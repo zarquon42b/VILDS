@@ -57,6 +57,7 @@ ILDS <- function(A) {
 #' \item{target}{target used}
 #' \item{bg.test}{result from between-group testing}
 #' \item{confR2}{confidence for relevant ILDs from bootstrapping}
+#' \item{x}{Procrustes superimposed raw data (without scaling)}
 #' 
 #' @examples
 #' require(Morpho)
@@ -244,7 +245,7 @@ ILDSR2 <- function(x,groups,R2tol=.9,autocluster=TRUE,gap=TRUE,bg.rounds=999,wg.
         if (!silent)
             colorILDS(confR2,wg.rounds,R2=all.R2)
     }     
-
+    out$x <- xorig
     class(out) <- "ILDSR2"
 
     if (plot) {

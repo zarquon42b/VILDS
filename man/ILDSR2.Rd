@@ -61,6 +61,7 @@ A list containing:
 \item{target}{target used}
 \item{bg.test}{result from between-group testing}
 \item{confR2}{confidence for relevant ILDs from bootstrapping}
+\item{x}{Procrustes superimposed raw data (without scaling)}
 }
 \description{
 Compute R2 for Interlandmark Distances explaining between group differences
