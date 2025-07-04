@@ -84,14 +84,17 @@ ILDS <- function(A) {
 #' @export 
 ILDSR2 <- function(x,groups,R2tol=.9,autocluster=TRUE,gap=TRUE,bg.rounds=999,wg.rounds=999,which=1:2,reference=NULL,target=NULL,mc.cores=1,plot=FALSE,silent=FALSE,...) {
     D <- dim(x)[2] ## get LM dimensionality
-    
+        
     
     bootstrap <- FALSE
+    
     args <- list(...)
     if ("bootstrap" %in% names(args)) {
         bootstrap <- args$bootstrap
     }
-
+    if (!bootstrap)
+        x <- procSym(x,CSinit = F,scale=F)$rotated
+    
     ## set up grouping variable
     regression <- FALSE
     if (!is.factor(groups) && is.numeric(groups)) {
